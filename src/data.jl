@@ -1,4 +1,4 @@
-export gen_all_ll_data
+export gen_all_ll_data, gen_all_fish_data
 
 """create the grid on which the functions shall be evaluated
 we evaluate likelihood for a in (0,2), n0 in (0,4) on an uniformly spaced grid
@@ -81,6 +81,56 @@ function gen_all_ll_data(index_combos, M_vals, noise_vals, m, w0, path)
                 df_ll = gen_ll_evals_for_hprm_comb(hprm)
                 store_ll_data(w0, n0_vals[n0_ind], a_vals[a_ind], m, M, noise, df_ll, path)
             end
+        end
+    end
+end
+
+# Functions for the fisher analysis
+"""store data
+"""
+function store_fish_data(w0::Float64,m::Float64,M::Int64,noise::Float64,df::DataFrame, path_to_repo::String)
+    CSV.write("$(path_to_repo)ma-code/data/fisher/m0.45/fish_$(w0)_$(m)_$(M)_$(noise).csv", df)
+end
+
+function compute_ll(x, hprm::Hyperprm, true_val::DataFrame)
+    a, n0 = x
+    hprm = Hyperprm(hprm.w0, n0, a, hprm.m, hprm.M, hprm.noise)
+    pred_val = sol_klausmeier(hprm)
+    ll = -0.5 * sum((true_val[:,"n"] - pred_val[:,"n"]) .^2) - 0.5 * sum((true_val[:,"w"] - pred_val[:,"w"]) .^2) # add up ll for both trajectories
+    #ll = -0.5 * sum((true_val[:,"n"] - pred_val[:,"n"]) .^2)
+    return ll
+end
+
+function gen_all_fish_data(M_vals, noise_vals, m, w0, path)
+    for M in M_vals
+        for noise in noise_vals
+
+            grid = create_grid()
+            fish = zeros(41, 21)
+
+            # evaluate fisher info on grid
+            for i in range(1, 41)
+                for j in range(1, 21)
+
+                    pt = grid[i,j]
+                    hprm = Hyperprm(w0, pt[2], pt[1], m, M, noise) #w0,n0,a,m,M
+
+                    sol_true = sol_klausmeier(hprm) # returns df
+                    sol_true = randomize_data(sol_true, hprm.noise) # include noise
+
+                    x = [hprm.a, hprm.n0]
+                    H = ForwardDiff.hessian(x -> compute_ll(x, hprm, sol_true), x)
+                    FIM = -H
+                    fish_val = tr(FIM)
+                    fish[i,j] = fish_val
+                end
+            end
+            
+            #create data frame
+            a_eval_pts = string.(0.0:0.1:2.0)
+            df_fish = DataFrame(fish, a_eval_pts)
+
+            store_fish_data(w0, m, M, noise, df_fish, path)
         end
     end
 end

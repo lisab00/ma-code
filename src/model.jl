@@ -12,12 +12,12 @@ All the parameters that can be set in the klausmeier model
 abstract type AbstractHyperprm end
 
 struct Hyperprm <: AbstractHyperprm
-    w0::Float64
-    n0::Float64
-    a::Float64
-    m::Float64
-    M::Int64
-    noise::Float64
+    w0::Real
+    n0::Real
+    a::Real
+    m::Real
+    M::Real
+    noise::Real
 end
 
 """define the klausmeier model equations
