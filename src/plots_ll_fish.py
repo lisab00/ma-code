@@ -124,6 +124,10 @@ def read_fish_file(w0, m, M, noise, path_to_file):
 """
 def make_fish_plot(fig, ax, csv):
 
+    min_val = np.min(csv)
+    if min_val <= 0:
+        csv = csv - min_val + 1e-10  # Shift all values so the minimum becomes ~0+
+
     # take log data bec values are very high
     csv = np.log(csv)
 
@@ -157,6 +161,7 @@ def make_all_fish_plots(M_vals, noise_vals, w0, m, path_to_read, path_to_store, 
             fig, ax = plt.subplots()
             make_fish_plot(fig, ax, csv)
             bif_plot(ax,m)
+            ax.set_title(f"M={M}, noise={noise}")
 
             if store: 
                 plt.savefig(f"{path_to_store}fish_{w0}_{m}_{M}_{noise}.pdf", bbox_inches='tight')
