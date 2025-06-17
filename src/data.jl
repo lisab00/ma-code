@@ -17,7 +17,7 @@ function randomize_data(df::DataFrame, noise::Float64)
     if noise == 0.0
         return df
     else
-        Random.seed!(1)
+        Random.seed!(1) # make it reproducible
         df[!, "w"] .= df[!, "w"] .+ rand(Normal(0, noise), nrow(df))
         df[!, "n"] .= df[!, "n"] .+ rand(Normal(0, noise), nrow(df))
         return df
@@ -92,6 +92,8 @@ function store_fish_data(w0::Float64,m::Float64,M::Int64,noise::Float64,df::Data
     CSV.write("$(path_to_repo)ma-code/data/fisher/m0.45/fish_$(w0)_$(m)_$(M)_$(noise).csv", df)
 end
 
+"""compute likelihood in format needed for ForwardDiff (specify variables to differentiate),same objective function
+"""
 function compute_ll(x, hprm::Hyperprm, true_val::DataFrame)
     a, n0 = x
     hprm = Hyperprm(hprm.w0, n0, a, hprm.m, hprm.M, hprm.noise)
@@ -101,6 +103,8 @@ function compute_ll(x, hprm::Hyperprm, true_val::DataFrame)
     return ll
 end
 
+"""function that generates all the fish data needed
+"""
 function gen_all_fish_data(M_vals, noise_vals, m, w0, path)
     for M in M_vals
         for noise in noise_vals
