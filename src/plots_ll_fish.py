@@ -190,8 +190,6 @@ def fi_ic(fig, ax, csv, ic):
     inits_y_ticks = np.arange(0.0, 4.1, 0.1)
     print(np.where(inits_y_ticks == ic))
     ind = np.where(np.isclose(inits_y_ticks, ic))[0]
-    print(ind)
-
     a_x_ticks = np.arange(0.0, 2.1, 0.1)
     ax.set_xticks(a_x_ticks[::4])
     ax.set_title(f"Marginal Fisher Information for n0={ic}")
