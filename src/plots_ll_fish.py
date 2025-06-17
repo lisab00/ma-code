@@ -86,7 +86,7 @@ def make_ll_plot(fig,ax,csv,ind, sparse):
     
 """generate all likelihood plots
 """
-def make_all_ll_plots(index_combos, M_vals, noise_vals, m, w0, path_to_read,path_to_store, store=False):
+def make_all_ll_plots(index_combos, M_vals, noise_vals, m, w0, path_to_read, path_to_store, store=False):
 
     for ind in index_combos:
         for M in M_vals:
