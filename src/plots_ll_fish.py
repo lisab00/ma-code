@@ -148,7 +148,7 @@ def make_fish_plot(fig, ax, csv):
 
 """create fisher plots for all parameter combinations
 """
-def make_all_fish_plots(M_vals, noise_vals, path_to_read, path_to_store, store=False):
+def make_all_fish_plots(M_vals, noise_vals, w0, m, path_to_read, path_to_store, store=False):
 
     for M in M_vals:
         for noise in noise_vals:
