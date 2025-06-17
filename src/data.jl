@@ -28,7 +28,7 @@ end
 """store data
 """
 function store_ll_data(w0::Float64,n0::Float64,a::Float64,m::Float64,M::Int64,noise::Float64,df::DataFrame, path_to_repo)
-    CSV.write("$(path_to_repo)ma-code/data/likelihood/m0.45/ll_$(w0)_$(n0)_$(a)_$(m)_$(M)_$(noise).csv", df)
+    CSV.write("$(path_to_repo)ll_$(w0)_$(n0)_$(a)_$(m)_$(M)_$(noise).csv", df)
 end
 
 """computes the likelihood
@@ -89,7 +89,7 @@ end
 """store data
 """
 function store_fish_data(w0::Float64,m::Float64,M::Int64,noise::Float64,df::DataFrame, path_to_repo::String)
-    CSV.write("$(path_to_repo)ma-code/data/fisher/m0.45/fish_$(w0)_$(m)_$(M)_$(noise).csv", df)
+    CSV.write("$(path_to_repo)fish_$(w0)_$(m)_$(M)_$(noise).csv", df)
 end
 
 """compute likelihood in format needed for ForwardDiff (specify variables to differentiate),same objective function
