@@ -120,7 +120,7 @@ def read_fish_file(w0, m, M, noise, path_to_file):
     csv = np.genfromtxt (path_to_file+name+ending, skip_header=1, delimiter=",")
     return csv
 
-"""create fisher plot on whole prm grid
+"""create single fisher plot on whole prm grid
 """
 def make_fish_plot(fig, ax, csv):
 
@@ -145,6 +145,21 @@ def make_fish_plot(fig, ax, csv):
     cbar.ax.set_ylabel('Fisher information')
     cbar.set_ticks([math.ceil(np.min(csv)), math.floor(np.max(csv))])
     return countouring
+
+"""create fisher plots for all parameter combinations
+"""
+def make_all_fish_plots(M_vals, noise_vals, path_to_read, path_to_store, store=False):
+
+    for M in M_vals:
+        for noise in noise_vals:
+            
+            csv = read_fish_file(w0,m,M,noise,path_to_read)
+            fig, ax = plt.subplots()
+            make_fish_plot(fig, ax, csv)
+            bif_plot(ax,m)
+
+            if store: 
+                plt.savefig(f"{path_to_store}fish_{w0}_{m}_{M}_{noise}.pdf", bbox_inches='tight')
 
 """plots the marginal fisher information, evaluated at every a and summed/ averaged across all ICs
 """
