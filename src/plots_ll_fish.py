@@ -4,6 +4,7 @@ import math
 
 from numpy import inf
 
+# reference: https://github.com/ElisabethRoesch/Bifurcations  
 
 # Part specifically for likelihood
 """helper function for ll
@@ -82,6 +83,32 @@ def make_ll_plot(fig,ax,csv,ind, sparse):
         else:
             cbar.set_ticks([-2000, -1000, 0])
         return("eieieie")
+    
+"""generate all likelihood plots
+"""
+def make_all_ll_plots(index_combos, M_vals, noise_vals, m, w0, path_to_read,path_to_store, store=False):
+
+    for ind in index_combos:
+        for M in M_vals:
+            for noise in noise_vals:
+
+                if M==10:
+                    sparse = True
+                else:
+                    sparse = False
+
+                n0 = get_ll_ics_one(ind[1])
+                a = get_ll_alps_one(ind[0])
+
+                csv = read_ll_file(w0,n0,a,m,M,noise,path_to_read)
+
+                fig, ax = plt.subplots()
+                make_ll_plot(fig, ax, csv, ind, sparse)
+                ax.set_title(f"M={M}, noise={noise}")
+                bif_plot(ax,m)
+
+                if store:
+                    plt.savefig(f"{path_to_store}ll_{w0}_{n0}_{a}_{m}_{M}_{noise}.pdf", bbox_inches='tight')
 
 
 ## Part specifically for fisher
