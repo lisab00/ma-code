@@ -10,14 +10,14 @@ from numpy import inf
 """helper function for ll
 """
 def get_ll_alps_one(a_ind): # converts index of alpha to actual alpha value (alp_ind is number of alpha value)
-    a = [0.1, 0.9, 1.1, 1.7]  # actual a values we have data for
+    a = [0.1, 0.9, 1.1, 1.3, 1.7]   # actual a values we have data for
     real_value = a[a_ind-1]
     return real_value
 
 """helper function for ll
 """
 def get_ll_ics_one(ics_ind): # converts index of ic to actual ic value
-    ics= [0.4, 0.5, 1.0, 1.3, 2.3] # actual ic values we have data for 
+    ics= [0.2, 0.4, 0.5, 1.0, 1.3, 2.3] # actual ic values we have data for 
     real_value = ics[ics_ind-1]
     return real_value
 
