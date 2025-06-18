@@ -27,7 +27,7 @@ def read_ll_file(w0, n0, a, m, M, noise, path_to_file): # read in ll data file i
     name = "ll"+"_"+str(w0)+"_"+str(n0)+"_"+str(a)+"_"+str(m)+"_"+str(M)+"_"+str(noise)
     ending=".csv"
     csv = np.genfromtxt (path_to_file+name+ending, skip_header=1, delimiter=",")
-    if M==10:
+    if M<=10:
         csv[csv == -inf] = -50
     else:
         csv[csv == -inf] = -2000
@@ -35,7 +35,7 @@ def read_ll_file(w0, n0, a, m, M, noise, path_to_file): # read in ll data file i
 
 """makes single ll plot for index combination ind
 """
-def make_ll_plot(fig,ax,csv,ind, sparse):
+def make_ll_plot(fig,ax,csv,ind, sparse, noisy):
 
     a_plot_nr = get_ll_alps_one(ind[0])
     ic_plot_nr = get_ll_ics_one(ind[1])
@@ -47,6 +47,8 @@ def make_ll_plot(fig,ax,csv,ind, sparse):
     # all values below -1000 are mapped to -1000
     if sparse:
         levels = np.linspace(-50, 0, 150)
+    elif noisy:
+        levels = np.linspace(math.ceil(np.min(csv)),  0, 150)
     else:
         levels = np.linspace(-2000, 0, 150)
 
@@ -65,6 +67,8 @@ def make_ll_plot(fig,ax,csv,ind, sparse):
         cbar.ax.set_ylabel('Log-Likelihood')
         if sparse:
             cbar.set_ticks([-50,0])
+        elif noisy:
+            cbar.set_ticks([math.ceil(np.min(csv)),0])
         else:
             cbar.set_ticks([-2000, -1000, 0])
         return countouring
@@ -80,6 +84,8 @@ def make_ll_plot(fig,ax,csv,ind, sparse):
         cbar.ax.set_ylabel('Log-Likelihood')
         if sparse:
             cbar.set_ticks([-50,0])
+        elif noisy:
+            cbar.set_ticks([math.ceil(np.min(csv)),0])
         else:
             cbar.set_ticks([-2000, -1000, 0])
         return("eieieie")
@@ -92,10 +98,15 @@ def make_all_ll_plots(index_combos, M_vals, noise_vals, m, w0, path_to_read, pat
         for M in M_vals:
             for noise in noise_vals:
 
-                if M==10:
+                if M <= 10:
                     sparse = True
                 else:
                     sparse = False
+
+                if noise >= 2.0:
+                    noisy = True
+                else:
+                    noisy = False
 
                 n0 = get_ll_ics_one(ind[1])
                 a = get_ll_alps_one(ind[0])
@@ -103,7 +114,7 @@ def make_all_ll_plots(index_combos, M_vals, noise_vals, m, w0, path_to_read, pat
                 csv = read_ll_file(w0,n0,a,m,M,noise,path_to_read)
 
                 fig, ax = plt.subplots()
-                make_ll_plot(fig, ax, csv, ind, sparse)
+                make_ll_plot(fig, ax, csv, ind, sparse, noisy)
                 ax.set_title(f"M={M}, noise={noise}")
                 bif_plot(ax,m)
 
