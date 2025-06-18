@@ -17,7 +17,7 @@ def get_ll_alps_one(a_ind): # converts index of alpha to actual alpha value (alp
 """helper function for ll
 """
 def get_ll_ics_one(ics_ind): # converts index of ic to actual ic value
-    ics= [0.2, 0.4, 0.5, 1.0, 1.3, 2.3] # actual ic values we have data for 
+    ics= [0.2, 0.4, 1.0, 1.3, 2.3] # actual ic values we have data for 
     real_value = ics[ics_ind-1]
     return real_value
 
