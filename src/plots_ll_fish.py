@@ -133,14 +133,15 @@ def read_fish_file(w0, m, M, noise, path_to_file):
 
 """create single fisher plot on whole prm grid
 """
-def make_fish_plot(fig, ax, csv):
+def make_fish_plot(fig, ax, csv, logging):
 
-    min_val = np.min(csv)
-    if min_val <= 0:
-        csv = csv - min_val + 1e-10  # Shift all values so the minimum becomes ~0+
+    if logging:
+        min_val = np.min(csv)
+        if min_val <= 0:
+            csv = csv - min_val + 1e-10  # Shift all values so the minimum becomes ~0+
 
-    # take log data bec values are very high
-    csv = np.log(csv)
+        # take log data bec values are very high
+        csv = np.log(csv)
 
     # points at which fish data is evaluated
     a_x_ticks = np.arange(0.0, 2.1, 0.1)
@@ -163,14 +164,14 @@ def make_fish_plot(fig, ax, csv):
 
 """create fisher plots for all parameter combinations
 """
-def make_all_fish_plots(M_vals, noise_vals, w0, m, path_to_read, path_to_store, store=False):
+def make_all_fish_plots(M_vals, noise_vals, w0, m, path_to_read, path_to_store, store=False, logging=False):
 
     for M in M_vals:
         for noise in noise_vals:
             
             csv = read_fish_file(w0,m,M,noise,path_to_read)
             fig, ax = plt.subplots()
-            make_fish_plot(fig, ax, csv)
+            make_fish_plot(fig, ax, csv, logging)
             bif_plot(ax,m)
             ax.set_title(f"M={M}, noise={noise}")
 
