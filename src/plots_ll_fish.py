@@ -148,7 +148,7 @@ def make_fish_plot(fig, ax, csv, logging):
     inits_y_ticks = np.arange(0.0, 4.1, 0.1)
 
     # all values below -8 are mapped to -8
-    levels = np.linspace(math.ceil(np.min(csv)),  math.floor(np.max(csv)),20)
+    levels = np.linspace(math.floor(np.min(csv)),  math.ceil(np.max(csv)),20)
 
     #ax.grid(color='grey', linestyle='-',alpha=0.1, linewidth=1)
     #ax.set_facecolor('white')
@@ -159,7 +159,7 @@ def make_fish_plot(fig, ax, csv, logging):
     ax.set_ylabel("IC")
     cbar = fig.colorbar(countouring,fraction=0.09)
     cbar.ax.set_ylabel('Fisher information')
-    cbar.set_ticks([math.ceil(np.min(csv)), math.floor(np.max(csv))])
+    cbar.set_ticks([math.floor(np.min(csv)), math.ceil(np.max(csv))])
     return countouring
 
 """create fisher plots for all parameter combinations
@@ -173,7 +173,7 @@ def make_all_fish_plots(M_vals, noise_vals, w0, m, path_to_read, path_to_store, 
             fig, ax = plt.subplots()
             make_fish_plot(fig, ax, csv, logging)
             bif_plot(ax,m)
-            ax.set_title(f"M={M}, noise={noise}")
+            ax.set_title(f"M={M}, noise={noise}, log={logging}")
 
             if store: 
                 plt.savefig(f"{path_to_store}fish_{w0}_{m}_{M}_{noise}.pdf", bbox_inches='tight')
