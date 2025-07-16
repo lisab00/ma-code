@@ -33,8 +33,8 @@ end
 
 """computes the likelihood
 """
-function compute_ll(hprm::Hyperprm, true_val::DataFrame)
-    pred_val = sol_klausmeier(hprm)
+function compute_ll(hprm::Hyperprm, true_val::DataFrame; t_fixed::Bool=false, t_end::Float64=50.0)
+    pred_val = sol_klausmeier(hprm; t_fixed=t_fixed, t_end=t_end)
     ll = -0.5 * sum((true_val[:,"n"] - pred_val[:,"n"]) .^2) - 0.5 * sum((true_val[:,"w"] - pred_val[:,"w"]) .^2) # add up ll for both trajectories
     #ll = -0.5 * sum((true_val[:,"n"] - pred_val[:,"n"]) .^2)
     return ll
@@ -42,10 +42,10 @@ end
 
 """generates and stores data for one prm combination. Run this for all a,n0,M,noise combinations wanted, helper function
 """
-function gen_ll_evals_for_hprm_comb(hprm_true::Hyperprm)
+function gen_ll_evals_for_hprm_comb(hprm_true::Hyperprm; t_fixed::Bool=false, t_end::Float64=50.0)
 
     grid = create_grid()
-    sol_true = sol_klausmeier(hprm_true) # returns df
+    sol_true = sol_klausmeier(hprm_true; t_fixed=t_fixed, t_end=t_end) # returns df
     sol_true = randomize_data(sol_true, hprm_true.noise) # include noise
 
     ll = zeros(41, 21)
@@ -56,7 +56,7 @@ function gen_ll_evals_for_hprm_comb(hprm_true::Hyperprm)
             pt = grid[i,j]
             hprm = Hyperprm(hprm_true.w0, pt[2], pt[1], hprm_true.m, hprm_true.M, hprm_true.noise) #w0,n0,a,m,M
             #eval likelihood
-            ll_val = compute_ll(hprm, sol_true)
+            ll_val = compute_ll(hprm, sol_true; t_fixed=t_fixed, t_end=t_end)
             
             ll[i,j] = ll_val
         end
@@ -94,10 +94,10 @@ end
 
 """compute likelihood in format needed for ForwardDiff (specify variables to differentiate),same objective function
 """
-function compute_ll(x, hprm::Hyperprm, true_val::DataFrame)
+function compute_ll(x, hprm::Hyperprm, true_val::DataFrame; t_fixed::Bool=false, t_end::Float64=50.0)
     a, n0 = x
     hprm = Hyperprm(hprm.w0, n0, a, hprm.m, hprm.M, hprm.noise)
-    pred_val = sol_klausmeier(hprm)
+    pred_val = sol_klausmeier(hprm; t_fixed=t_fixed, t_end=t_end)
     if hprm.noise == 0.0 # then compute expected fisher info
         ll = -0.5 * sum((true_val[:,"n"] - pred_val[:,"n"]) .^2) - 0.5 * sum((true_val[:,"w"] - pred_val[:,"w"]) .^2) # add up ll for both trajectories
     else
@@ -108,7 +108,7 @@ end
 
 """function that generates all the fish data needed
 """
-function gen_all_fish_data(M_vals, noise_vals, m, w0, path)
+function gen_all_fish_data(M_vals, noise_vals, m, w0, path; t_fixed::Bool=false, t_end::Float64=50.0)
     for M in M_vals
         for noise in noise_vals
 
@@ -122,11 +122,11 @@ function gen_all_fish_data(M_vals, noise_vals, m, w0, path)
                     pt = grid[i,j]
                     hprm = Hyperprm(w0, pt[2], pt[1], m, M, noise) #w0,n0,a,m,M
 
-                    sol_true = sol_klausmeier(hprm) # returns df
+                    sol_true = sol_klausmeier(hprm; t_fixed=t_fixed, t_end=t_end) # returns df
                     sol_true = randomize_data(sol_true, hprm.noise) # include noise
 
                     x = [hprm.a, hprm.n0]
-                    H = ForwardDiff.hessian(x -> compute_ll(x, hprm, sol_true), x)
+                    H = ForwardDiff.hessian(x -> compute_ll(x, hprm, sol_true; t_fixed=t_fixed, t_end=t_end), x)
                     FIM = -H
                     fish_val = tr(FIM)
                     fish[i,j] = fish_val
