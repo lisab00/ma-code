@@ -98,8 +98,11 @@ function compute_ll(x, hprm::Hyperprm, true_val::DataFrame)
     a, n0 = x
     hprm = Hyperprm(hprm.w0, n0, a, hprm.m, hprm.M, hprm.noise)
     pred_val = sol_klausmeier(hprm)
-    ll = -0.5 * sum((true_val[:,"n"] - pred_val[:,"n"]) .^2) - 0.5 * sum((true_val[:,"w"] - pred_val[:,"w"]) .^2) # add up ll for both trajectories
-    #ll = -0.5 * sum((true_val[:,"n"] - pred_val[:,"n"]) .^2)
+    if hprm.noise == 0.0 # then compute expected fisher info
+        ll = -0.5 * sum((true_val[:,"n"] - pred_val[:,"n"]) .^2) - 0.5 * sum((true_val[:,"w"] - pred_val[:,"w"]) .^2) # add up ll for both trajectories
+    else
+        ll = -0.5 * 1/hprm.noise * sum((true_val[:,"n"] - pred_val[:,"n"]) .^2) - 0.5 * 1/hprm.noise * sum((true_val[:,"w"] - pred_val[:,"w"]) .^2) # add up ll for both trajectories
+    end
     return ll
 end
 
