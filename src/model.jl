@@ -29,15 +29,23 @@ end
 
 """solves the klausmeier model for given set of parameters
 """
-function sol_klausmeier(hprm::Hyperprm)
+function sol_klausmeier(hprm::Hyperprm; t_fixed::Bool=false, t_end::Float64=50.0)
     u0 = [hprm.w0; hprm.n0]
     p = [hprm.a; hprm.m]
-    tspan = (0.0, hprm.M-1)
 
-    prob = ODEProblem(klausmeier!, u0, tspan, p)
-    sol = solve(prob,
-        saveat=1.0  # consider specific time points
-    )
-
+    if t_fixed
+        tspan = (0.0, t_end)
+        prob = ODEProblem(klausmeier!, u0, tspan, p)
+        steps = range(0.0, stop=t_end, length=hprm.M)
+        sol = solve(prob,
+            saveat=steps  # consider specific time points
+        )
+    else
+        tspan = (0.0, hprm.M-1)
+        prob = ODEProblem(klausmeier!, u0, tspan, p)
+        sol = solve(prob,
+            saveat=1.0  # consider specific time points
+        )
+    end
     return DataFrame(time=sol.t, w=sol[1, :], n=sol[2, :])
 end
