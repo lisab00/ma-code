@@ -71,14 +71,14 @@ end
 
 """function that generates all the ll data needed
 """
-function gen_all_ll_data(index_combos, M_vals, noise_vals, m, w0, path)
+function gen_all_ll_data(index_combos, M_vals, noise_vals, m, w0, path; t_fixed::Bool=false, t_end::Float64=50.0)
     for ind in index_combos
         for M in M_vals
             for noise in noise_vals
                 a_ind = ind[1]
                 n0_ind = ind[2]
                 hprm = Hyperprm(w0, n0_vals[n0_ind], a_vals[a_ind], m, M, noise)
-                df_ll = gen_ll_evals_for_hprm_comb(hprm)
+                df_ll = gen_ll_evals_for_hprm_comb(hprm; t_fixed=t_fixed, t_end=t_end)
                 store_ll_data(w0, n0_vals[n0_ind], a_vals[a_ind], m, M, noise, df_ll, path)
             end
         end
