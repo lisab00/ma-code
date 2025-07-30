@@ -1,7 +1,9 @@
 export gen_all_ll_data, gen_all_fish_data
 
-"""create the grid on which the functions shall be evaluated
-we evaluate likelihood for a in (0,2), n0 in (0,4) on an uniformly spaced grid
+"""
+    function create_grid()
+
+Create the evaluation grid for a function. We evaluate for a in (0,2), n0 in (0,4) on a uniformly spaced grid.
 """
 function create_grid()
     a_vals = 0.0:0.1:2.0
@@ -11,7 +13,17 @@ function create_grid()
     return grid
 end
 
-"""add Gaussian noise to simulated data
+"""
+    function randomize_data(df::DataFrame, noise::Float64)
+
+add mean-zero Gaussian noise to simulated data.
+
+# Arguments
+- `df::DataFrame`: data to add noise on
+- `noise::Float64`: noise level sigma^2 (i.e. variance of Gaussian)
+
+# Returns
+-`DataFrame`: with randomized data
 """
 function randomize_data(df::DataFrame, noise::Float64)
     if noise == 0.0
@@ -25,22 +37,55 @@ function randomize_data(df::DataFrame, noise::Float64)
 end
 
 # Functions for the likelihood analysis
-"""store data
 """
-function store_ll_data(w0::Float64,n0::Float64,a::Float64,m::Float64,M::Int64,noise::Float64,df::DataFrame, path_to_repo)
-    CSV.write("$(path_to_repo)ll_$(w0)_$(n0)_$(a)_$(m)_$(M)_$(noise).csv", df)
+    function store_ll_data(w0::Float64,n0::Float64,a::Float64,m::Float64,M::Int64,noise::Float64,df::DataFrame, path_to_repo)
+
+stores data evaluated on grid in a csv file.
+Name of form "ll_w0_n0_a_m_M_noise.csv"
+
+# Arguments
+- `df::DataFrame`: df to store
+- `path_to_repo::String`: path to where to store the file
+"""
+function store_ll_data(w0::Float64,n0::Float64,a::Float64,m::Float64,M::Int64,noise::Float64,df::DataFrame, path_to_store::String)
+    CSV.write("$(path_to_store)ll_$(w0)_$(n0)_$(a)_$(m)_$(M)_$(noise).csv", df)
 end
 
-"""computes the likelihood
+"""
+    function compute_ll(hprm::Hyperprm, true_val::DataFrame; t_fixed::Bool=false, t_end::Float64=50.0, t_step::Float64=1.0)
+
+compute the log-likelihood for Klausmeier model for data with Gaussian noise. First, solve Klausmeier model for given hyperparameters and noise level. Then, compare to true trajectories.
+
+# Arguments
+- `hprm::Hyperprm`: parameters for which the Klausmeier simulation is performed
+- `true_val::DataFrame`: true data trajectories. DataFrame with columns "w" and "n".
+- `t_fixed::Bool`: true if we consider a fixed observation time window
+- `t_end::Float64`: end of observation window (if t_fixed=true)
+- `t_step::Float64`: TODO  // rm or fix
+
+# Returns
+- `Float`: scalar value of log-likelihood at given grid point 
 """
 function compute_ll(hprm::Hyperprm, true_val::DataFrame; t_fixed::Bool=false, t_end::Float64=50.0, t_step::Float64=1.0)
     pred_val = sol_klausmeier(hprm; t_fixed=t_fixed, t_end=t_end, t_step=t_step)
     ll = -0.5 * sum((true_val[:,"n"] - pred_val[:,"n"]) .^2) - 0.5 * sum((true_val[:,"w"] - pred_val[:,"w"]) .^2) # add up ll for both trajectories
-    #ll = -0.5 * sum((true_val[:,"n"] - pred_val[:,"n"]) .^2)
     return ll
 end
 
-"""generates and stores data for one prm combination. Run this for all a,n0,M,noise combinations wanted, helper function
+"""
+    function gen_ll_evals_for_hprm_comb(hprm_true::Hyperprm; t_fixed::Bool=false, t_end::Float64=50.0, t_step::Float64=1.0)
+
+generates log-likelihood data evaluated on grid for one (a,n0,M,noise) hyperprm combination. Run this for all hyperprm combinations wanted, helper function
+
+# Arguments
+- `hprm::Hyperprm`: parameters for which the Klausmeier simulation is performed
+- `true_val::DataFrame`: true data trajectories. DataFrame with columns "w" and "n".
+- `t_fixed::Bool`: true if we consider a fixed observation time window
+- `t_end::Float64`: end of observation window (if t_fixed=true)
+- `t_step::Float64`: TODO  // rm or fix
+
+# Returns
+-`DataFrame`: DataFrame of log-likelihood evaluated on grid for given parameter combination
 """
 function gen_ll_evals_for_hprm_comb(hprm_true::Hyperprm; t_fixed::Bool=false, t_end::Float64=50.0, t_step::Float64=1.0)
 
@@ -56,9 +101,7 @@ function gen_ll_evals_for_hprm_comb(hprm_true::Hyperprm; t_fixed::Bool=false, t_
             pt = grid[i,j]
             hprm = Hyperprm(hprm_true.w0, pt[2], pt[1], hprm_true.m, hprm_true.M, hprm_true.noise) #w0,n0,a,m,M
             #eval likelihood
-            ll_val = compute_ll(hprm, sol_true; t_fixed=t_fixed, t_end=t_end, t_step=t_step)
-            
-            ll[i,j] = ll_val
+            ll[i,j] = compute_ll(hprm, sol_true; t_fixed=t_fixed, t_end=t_end, t_step=t_step)
         end
     end
     
@@ -69,7 +112,21 @@ function gen_ll_evals_for_hprm_comb(hprm_true::Hyperprm; t_fixed::Bool=false, t_
     return df_ll
 end
 
-"""function that generates all the ll data needed
+"""
+    function gen_all_ll_data(index_combos, M_vals, noise_vals, m, w0, path; t_fixed::Bool=false, t_end::Float64=50.0, t_step::Float64=1.0)
+
+function that generates and stores all the ll data needed. On all a,n0,M,noise prm combinations specifed.
+
+# Arguments
+- `index_combos`: indices of parameter values underlying true data simulation.
+- `M_vals`: sample sizes
+- `noise_vals`: noise levels
+- `m`: mortality rate in Klausmeier model (fixed)
+- `w0`: initial value for water compartment in Klausmeier model (fixed)
+- `path`: path where ll data is stored
+- `t_fixed::Bool`: true if we consider a fixed observation time window
+- `t_end::Float64`: end of observation window (if t_fixed=true)
+- `t_step::Float64`: TODO  // rm or fix
 """
 function gen_all_ll_data(index_combos, M_vals, noise_vals, m, w0, path; t_fixed::Bool=false, t_end::Float64=50.0, t_step::Float64=1.0)
     for ind in index_combos
