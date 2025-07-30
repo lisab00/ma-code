@@ -113,22 +113,22 @@ function gen_ll_evals_for_hprm_comb(hprm_true::Hyperprm; t_fixed::Bool=false, t_
 end
 
 """
-    function gen_all_ll_data(index_combos, M_vals, noise_vals, m, w0, path; t_fixed::Bool=false, t_end::Float64=50.0, t_step::Float64=1.0)
+    function gen_all_ll_data(index_combos::Vector{Vector{Int64}}, M_vals::Vector{Int64}, noise_vals::Vector{Float64}, m::Float64, w0::Float64, path::String; t_fixed::Bool=false, t_end::Float64=50.0, t_step::Float64=1.0)
 
 function that generates and stores all the ll data needed. On all a,n0,M,noise prm combinations specifed.
 
 # Arguments
-- `index_combos`: indices of parameter values underlying true data simulation.
-- `M_vals`: sample sizes
-- `noise_vals`: noise levels
-- `m`: mortality rate in Klausmeier model (fixed)
-- `w0`: initial value for water compartment in Klausmeier model (fixed)
-- `path`: path where ll data is stored
+- `index_combos::Vector{Vector{Int64}}`: indices of parameter values underlying true data simulation.
+- `M_val::Vector{Int64}`: sample sizes
+- `noise_vals::Vector{Float64}`: noise levels
+- `m::Float64`: mortality rate in Klausmeier model (fixed)
+- `w0::Float64`: initial value for water compartment in Klausmeier model (fixed)
+- `path::String`: path where ll data is stored
 - `t_fixed::Bool`: true if we consider a fixed observation time window
 - `t_end::Float64`: end of observation window (if t_fixed=true)
 - `t_step::Float64`: TODO  // rm or fix
 """
-function gen_all_ll_data(index_combos, M_vals, noise_vals, m, w0, path; t_fixed::Bool=false, t_end::Float64=50.0, t_step::Float64=1.0)
+function gen_all_ll_data(index_combos::Vector{Vector{Int64}}, M_vals::Vector{Int64}, noise_vals::Vector{Float64}, m::Float64, w0::Float64, path::String; t_fixed::Bool=false, t_end::Float64=50.0, t_step::Float64=1.0)
     for ind in index_combos
         for M in M_vals
             for noise in noise_vals
