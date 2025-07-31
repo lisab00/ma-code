@@ -1,5 +1,7 @@
 export gen_all_ll_data, gen_all_fish_data
 
+
+# Tools
 """
     function create_grid()
 
@@ -36,6 +38,21 @@ function randomize_data(df::DataFrame, noise::Float64)
     end
 end
 
+"""
+    function select_M_rows(df::DataFrame, M::Real)
+
+select M rows in equidistant steps from DataFrame.
+
+# Arguments
+- `df::DataFrame`: DataFrame from which rows are selected
+- `M::Real`: Number of rows to select
+"""
+function select_M_rows(df::DataFrame, M::Real)
+    indices = round.(Int, range(1, nrow(df), length=M))
+    return df[indices, :]
+end
+
+
 # Functions for the likelihood analysis
 """
     function store_ll_data(w0::Float64,n0::Float64,a::Float64,m::Float64,M::Int64,noise::Float64,df::DataFrame, path_to_repo)
@@ -68,6 +85,9 @@ compute the log-likelihood in least-squares form for Klausmeier model for data w
 """
 function compute_ll(hprm::Hyperprm, true_val::DataFrame; t_fixed::Bool=false, t_end::Float64=50.0, t_step::Float64=1.0)
     pred_val = sol_klausmeier(hprm; t_fixed=t_fixed, t_end=t_end, t_step=t_step)
+    if t_fixed # pick M samples from fixed observation time window
+        pred_val = select_M_rows(pred_val, hprm.M)
+    end
     ll = -0.5 * sum((true_val[:,"n"] - pred_val[:,"n"]) .^2) - 0.5 * sum((true_val[:,"w"] - pred_val[:,"w"]) .^2) # add up ll for both trajectories
     return ll
 end
@@ -92,6 +112,9 @@ function gen_ll_evals_for_hprm_comb(hprm_true::Hyperprm; t_fixed::Bool=false, t_
     grid = create_grid()
     sol_true = sol_klausmeier(hprm_true; t_fixed=t_fixed, t_end=t_end, t_step=t_step) # returns df
     sol_true = randomize_data(sol_true, hprm_true.noise) # include noise
+    if t_fixed # pick M samples from fixed observation time window
+        sol_true = select_M_rows(sol_true, hprm_true.M)
+    end
 
     ll = zeros(41, 21)
 
@@ -142,6 +165,7 @@ function gen_all_ll_data(index_combos::Vector{Vector{Int64}}, M_vals::Vector{Int
     end
 end
 
+
 # Functions for the fisher analysis
 """
     function store_fish_data(w0::Float64,m::Float64,M::Int64,noise::Float64,df::DataFrame, path::String)
@@ -178,6 +202,9 @@ function compute_ll(x, hprm::Hyperprm, true_val::DataFrame; t_fixed::Bool=false,
     a, n0 = x
     hprm = Hyperprm(hprm.w0, n0, a, hprm.m, hprm.M, hprm.noise)
     pred_val = sol_klausmeier(hprm; t_fixed=t_fixed, t_end=t_end, t_step=t_step)
+    if t_fixed # pick M samples from fixed observation time window
+        pred_val = select_M_rows(pred_val, hprm.M)
+    end
     if hprm.noise == 0.0 # then compute expected fisher info
         ll = -0.5 * sum((true_val[:,"n"] - pred_val[:,"n"]) .^2) - 0.5 * sum((true_val[:,"w"] - pred_val[:,"w"]) .^2) # add up ll for both trajectories
     else
@@ -217,6 +244,9 @@ function gen_all_fish_data(M_vals, noise_vals, m, w0, path; t_fixed::Bool=false,
 
                     sol_true = sol_klausmeier(hprm; t_fixed=t_fixed, t_end=t_end, t_step=t_step) # returns df
                     sol_true = randomize_data(sol_true, hprm.noise) # include noise
+                    if t_fixed # pick M samples from fixed observation time window
+                        sol_true = select_M_rows(sol_true, hprm_true.M)
+                    end
 
                     x = [hprm.a, hprm.n0]
                     H = ForwardDiff.hessian(x -> compute_ll(x, hprm, sol_true; t_fixed=t_fixed, t_end=t_end, t_step=t_step), x)

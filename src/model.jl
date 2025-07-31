@@ -49,7 +49,7 @@ TODO: integration time?
 - `t_step::Float64`: TODO  // rm or fix
 
 # Returns
-- `DataFrame`: columns "t", "w", "n" represent the simulated state of the compartment at given time step
+- `DataFrame`: columns "time", "w", "n" represent the simulated state of the compartment at given time step
 """
 function sol_klausmeier(hprm::Hyperprm; t_fixed::Bool=false, t_end::Float64=50.0, t_step::Float64=1.0)
     u0 = [hprm.w0; hprm.n0]
@@ -58,9 +58,8 @@ function sol_klausmeier(hprm::Hyperprm; t_fixed::Bool=false, t_end::Float64=50.0
     if t_fixed
         tspan = (0.0, t_end)
         prob = ODEProblem(klausmeier!, u0, tspan, p)
-        steps = range(0.0, stop=t_end, length=hprm.M)
         sol = solve(prob,
-            saveat=steps  # consider specific time points
+            saveat=0.1  # integration time 0.1, save at equidistant range
         )
     else
         tspan = (0.0, hprm.M-1)
