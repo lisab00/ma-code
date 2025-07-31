@@ -45,8 +45,8 @@ TODO: integration time?
 # Arguments
 - `hprm::Hyperprm`: parameters for which the Klausmeier simulation is performed
 - `t_fixed::Bool`: true if we consider a fixed observation time window
-- `t_end::Float64`: end of observation window (if t_fixed=true)
-- `t_step::Float64`: TODO  // rm or fix
+- `t_end::Float64`: end of observation window (set if t_fixed=true)
+- `t_step::Float64`: step size with which M observations should be picked (set if t_fixed=false)
 
 # Returns
 - `DataFrame`: columns "time", "w", "n" represent the simulated state of the compartment at given time step
@@ -57,16 +57,59 @@ function sol_klausmeier(hprm::Hyperprm; t_fixed::Bool=false, t_end::Float64=50.0
 
     if t_fixed
         tspan = (0.0, t_end)
-        prob = ODEProblem(klausmeier!, u0, tspan, p)
-        sol = solve(prob,
-            saveat=0.1  # integration time 0.1, save at equidistant range
-        )
     else
-        tspan = (0.0, hprm.M-1)
-        prob = ODEProblem(klausmeier!, u0, tspan, p)
-        sol = solve(prob,
-            saveat=t_step  # consider specific time points
-        )
+        M_end =  t_step*(hprm.M-1)
+        tspan = (0.0, M_end) # ensure we sample up to sufficient time (later pick M samples with step size t_step)
+
     end
-    return DataFrame(time=sol.t, w=sol[1, :], n=sol[2, :])
+
+    prob = ODEProblem(klausmeier!, u0, tspan, p)
+    sol = solve(prob,
+        saveat=0.1  # integration time 0.1, save at equidistant range
+    )
+    df_sol = DataFrame(time=sol.t, w=sol[1, :], n=sol[2, :])
+
+    if t_fixed
+        df_sol = select_M_rows(df_sol, hprm.M) # pick M samples from fixed observation time window
+    else
+        df_sol = step_M_times(df_sol, M_end, t_step)
+    end
+
+    return df_sol
+end
+
+"""
+    function select_M_rows(df::DataFrame, M::Real)
+
+select M rows in equidistant steps from DataFrame.
+
+# Arguments
+- `df::DataFrame`: DataFrame from which rows are selected
+- `M::Real`: Number of rows to select
+
+# Returns
+- `DataFrame`: contains M rows=samples of ODE solution DataFrame
+"""
+function select_M_rows(df::DataFrame, M::Real)
+    indices = round.(Int, range(1, nrow(df), length=M))
+    return df[indices, :]
+end
+
+"""
+    function step_M_times(df::DataFrame, M_end::Float64, t_step::Float64)
+
+start at t=0 and make time steps with length t_step until M_end. M_end=M*t_step such that we obtain M equidistand time steps.
+
+# Arguments
+- `df::DataFrame`: contain ODE solution with "time" column
+- `M_end::Float64`: end time point of ODE observation
+- `t_step::Float64`: step size of times at which we want to pick the observations
+
+# Returns
+- `DataFrame`: contains M samples observed in time distances t_step
+"""
+function step_M_times(df::DataFrame, M_end::Float64, t_step::Float64)
+    time_pts = 0:t_step:M_end 
+    df = filter(row -> row.time in time_pts, df)
+    return df
 end
