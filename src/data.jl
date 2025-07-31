@@ -222,7 +222,7 @@ function gen_all_fish_data(M_vals, noise_vals, m, w0, path; t_fixed::Bool=false,
                     sol_true = sol_klausmeier(hprm; t_fixed=t_fixed, t_end=t_end, t_step=t_step) # returns df
                     sol_true = randomize_data(sol_true, hprm.noise) # include noise
 
-                    x = [hprm.a, hprm.n0]
+                    x = [hprm.a, hprm.n0] # Q: put here MLE?
                     H = ForwardDiff.hessian(x -> compute_ll(x, hprm, sol_true; t_fixed=t_fixed, t_end=t_end, t_step=t_step), x)
                     FIM = -H
                     fish_val = tr(FIM)
