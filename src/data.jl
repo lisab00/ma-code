@@ -45,7 +45,7 @@ Name of form "ll_w0_n0_a_m_M_noise.csv"
 
 # Arguments
 - `df::DataFrame`: df to store
-- `path_to_repo::String`: path to where to store the file
+- `path_to_repo::String`: path to folder where to store the file
 """
 function store_ll_data(w0::Float64,n0::Float64,a::Float64,m::Float64,M::Int64,noise::Float64,df::DataFrame, path_to_store::String)
     CSV.write("$(path_to_store)ll_$(w0)_$(n0)_$(a)_$(m)_$(M)_$(noise).csv", df)
@@ -54,7 +54,7 @@ end
 """
     function compute_ll(hprm::Hyperprm, true_val::DataFrame; t_fixed::Bool=false, t_end::Float64=50.0, t_step::Float64=1.0)
 
-compute the log-likelihood for Klausmeier model for data with Gaussian noise. First, solve Klausmeier model for given hyperparameters and noise level. Then, compare to true trajectories.
+compute the log-likelihood in least-squares form for Klausmeier model for data with Gaussian noise. First, simulate Klausmeier model for given hyperparameters and noise level. Then, compare to true trajectories.
 
 # Arguments
 - `hprm::Hyperprm`: parameters for which the Klausmeier simulation is performed
@@ -75,7 +75,7 @@ end
 """
     function gen_ll_evals_for_hprm_comb(hprm_true::Hyperprm; t_fixed::Bool=false, t_end::Float64=50.0, t_step::Float64=1.0)
 
-generates log-likelihood data evaluated on grid for one (a,n0,M,noise) hyperprm combination. Run this for all hyperprm combinations wanted, helper function
+evaluates log-likelihood on grid for one (a,n0,M,noise) hyperprm combination. Run this for all hyperprm combinations wanted, helper function
 
 # Arguments
 - `hprm::Hyperprm`: parameters for which the Klausmeier simulation is performed
@@ -118,12 +118,12 @@ end
 function that generates and stores all the ll data needed. On all a,n0,M,noise prm combinations specifed.
 
 # Arguments
-- `index_combos::Vector{Vector{Int64}}`: indices of parameter values underlying true data simulation.
+- `index_combos::Vector{Vector{Int64}}`: indices of parameter values underlying true data observations.
 - `M_val::Vector{Int64}`: sample sizes
 - `noise_vals::Vector{Float64}`: noise levels
 - `m::Float64`: mortality rate in Klausmeier model (fixed)
 - `w0::Float64`: initial value for water compartment in Klausmeier model (fixed)
-- `path::String`: path where ll data is stored
+- `path::String`: path to folder where ll data is stored
 - `t_fixed::Bool`: true if we consider a fixed observation time window
 - `t_end::Float64`: end of observation window (if t_fixed=true)
 - `t_step::Float64`: TODO  // rm or fix
@@ -143,13 +143,36 @@ function gen_all_ll_data(index_combos::Vector{Vector{Int64}}, M_vals::Vector{Int
 end
 
 # Functions for the fisher analysis
-"""store data
 """
-function store_fish_data(w0::Float64,m::Float64,M::Int64,noise::Float64,df::DataFrame, path_to_repo::String)
-    CSV.write("$(path_to_repo)fish_$(w0)_$(m)_$(M)_$(noise).csv", df)
+    function store_fish_data(w0::Float64,m::Float64,M::Int64,noise::Float64,df::DataFrame, path::String)
+
+stores data evaluated on grid in a csv file.
+Name of form "fish_w0_n0_a_m_M_noise.csv"
+
+# Arguments
+- `df::DataFrame`: df to store
+- `path_to_repo::String`: path to folder where to store the file
+"""
+function store_fish_data(w0::Float64,m::Float64,M::Int64,noise::Float64,df::DataFrame, path::String)
+    CSV.write("$(path)fish_$(w0)_$(m)_$(M)_$(noise).csv", df)
 end
 
-"""compute likelihood in format needed for ForwardDiff (specify variables to differentiate),same objective function
+"""
+    function compute_ll(x, hprm::Hyperprm, true_val::DataFrame; t_fixed::Bool=false, t_end::Float64=50.0, t_step::Float64=1.0)
+
+compute the log-likelihood in least-squares form for Klausmeier model for data with Gaussian noise. First, simulate Klausmeier model for given hyperparameters and noise level. Then, compare to true trajectories.
+Includes x variables needed for ForwardDiff.
+
+# Arguments
+- `x`: variables with respect to which is differentiated
+- `hprm::Hyperprm`: parameters for which the Klausmeier simulation is performed
+- `true_val::DataFrame`: true data trajectories. DataFrame with columns "w" and "n".
+- `t_fixed::Bool`: true if we consider a fixed observation time window
+- `t_end::Float64`: end of observation window (if t_fixed=true)
+- `t_step::Float64`: TODO  // rm or fix
+
+# Returns
+- `Float`: scalar value of log-likelihood at given grid point 
 """
 function compute_ll(x, hprm::Hyperprm, true_val::DataFrame; t_fixed::Bool=false, t_end::Float64=50.0, t_step::Float64=1.0)
     a, n0 = x
@@ -163,7 +186,20 @@ function compute_ll(x, hprm::Hyperprm, true_val::DataFrame; t_fixed::Bool=false,
     return ll
 end
 
-"""function that generates all the fish data needed
+"""
+    function gen_all_fish_data(M_vals, noise_vals, m, w0, path; t_fixed::Bool=false, t_end::Float64=50.0, t_step::Float64=1.0)
+
+function that generates and stores all the fish data needed. On all a,n0,M,noise prm combinations specifed.
+
+# Arguments
+- `M_val::Vector{Int64}`: sample sizes
+- `noise_vals::Vector{Float64}`: noise levels
+- `m::Float64`: mortality rate in Klausmeier model (fixed)
+- `w0::Float64`: initial value for water compartment in Klausmeier model (fixed)
+- `path::String`: path to folder where fish data is stored
+- `t_fixed::Bool`: true if we consider a fixed observation time window
+- `t_end::Float64`: end of observation window (if t_fixed=true)
+- `t_step::Float64`: TODO  // rm or fix
 """
 function gen_all_fish_data(M_vals, noise_vals, m, w0, path; t_fixed::Bool=false, t_end::Float64=50.0, t_step::Float64=1.0)
     for M in M_vals
