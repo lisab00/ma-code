@@ -74,9 +74,7 @@ function sol_klausmeier(hprm::Hyperprm; t_fixed::Bool=false, t_end::Float64=50.0
     else
         df_sol = step_M_times(df_sol, M_end, t_step)
     end
-
-    df_sol = randomize_data(df_sol, hprm.noise) # include noise
-
+    
     return df_sol
 end
 
@@ -114,27 +112,4 @@ function step_M_times(df::DataFrame, M_end::Float64, t_step::Float64)
     time_pts = 0:t_step:M_end 
     df = filter(row -> row.time in time_pts, df)
     return df
-end
-
-"""
-    function randomize_data(df::DataFrame, noise::Float64)
-
-add mean-zero Gaussian noise to simulated data.
-
-# Arguments
-- `df::DataFrame`: data to add noise on
-- `noise::Float64`: noise level sigma^2 (i.e. variance of Gaussian)
-
-# Returns
--`DataFrame`: with randomized data
-"""
-function randomize_data(df::DataFrame, noise::Float64)
-    if noise == 0.0
-        return df
-    else
-        Random.seed!(1) # make it reproducible
-        df[!, "w"] .= df[!, "w"] .+ rand(Normal(0, noise), nrow(df))
-        df[!, "n"] .= df[!, "n"] .+ rand(Normal(0, noise), nrow(df))
-        return df
-    end
 end
