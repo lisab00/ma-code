@@ -7,23 +7,36 @@ from numpy import inf
 # reference: https://github.com/ElisabethRoesch/Bifurcations  
 
 # Part specifically for likelihood
-"""helper function for ll
-"""
-def get_ll_alps_one(a_ind): # converts index of alpha to actual alpha value (alp_ind is number of alpha value)
+def get_ll_alps_one(a_ind): 
+    """
+    helper function for ll. Converts index of alpha to actual alpha value (alp_ind is number of alpha value)
+
+    Args:
+        a_ind (int): index of parameter a to be considered (must be between 1 and 5)
+
+    Returns:
+        actual value for parameter a
+    """
     a = [0.1, 0.9, 1.1, 1.3, 1.7]   # actual a values we have data for
-    real_value = a[a_ind-1]
-    return real_value
+    return a[a_ind-1]
 
-"""helper function for ll
-"""
-def get_ll_ics_one(ics_ind): # converts index of ic to actual ic value
-    ics= [0.2, 0.4, 1.0, 1.3, 2.3] # actual ic values we have data for 
-    real_value = ics[ics_ind-1]
-    return real_value
+def get_ll_ics_one(ics_ind):
+    """
+    helper function for ll. Converts index of ic to actual ic value (ics_ind is number of ic value)
 
-"""read in the ll file stored in a specific format
-"""
-def read_ll_file(w0, n0, a, m, M, noise, path_to_file): # read in ll data file in required format
+    Args:
+        a_ind (int): index of parameter a to be considered (must be between 1 and 5)
+
+    Returns:
+        actual value for parameter a
+    """
+    ics= [0.2, 0.4, 1.0, 1.3, 2.3] # actual ic values we have data for
+    return ics[ics_ind-1]
+
+def read_ll_file(w0, n0, a, m, M, noise, path_to_file):
+    """
+    read in the ll file stored in a specific format.
+    """
     name = "ll"+"_"+str(w0)+"_"+str(n0)+"_"+str(a)+"_"+str(m)+"_"+str(M)+"_"+str(noise)
     ending=".csv"
     csv = np.genfromtxt (path_to_file+name+ending, skip_header=1, delimiter=",")
@@ -33,9 +46,10 @@ def read_ll_file(w0, n0, a, m, M, noise, path_to_file): # read in ll data file i
         csv[csv == -inf] = -2000
     return csv
 
-"""makes single ll plot for index combination ind
-"""
 def make_ll_plot(fig,ax,csv,ind, sparse, noisy):
+    """
+    make single ll plot for index combination ind
+    """
 
     a_plot_nr = get_ll_alps_one(ind[0])
     ic_plot_nr = get_ll_ics_one(ind[1])
