@@ -107,11 +107,8 @@ function gen_ll_evals_for_hprm_comb(hprm_true::Hyperprm; t_fixed::Bool=false, t_
     ll = zeros(41, 21)
 
     for i in range(1, 41)
-        for j in range(1, 21)
-            #eval model for each point on grid
+        for j in range(1, 21) #eval for each point on grid
             pt = grid[i,j]
-            hprm = Hyperprm(hprm_true.w0, pt[2], pt[1], hprm_true.m, hprm_true.M, hprm_true.noise) #w0,n0,a,m,M
-            #eval likelihood
             ll[i,j] = compute_ll([pt[1],pt[2]], hprm_true, sol_true; t_fixed=t_fixed, t_end=t_end, t_step=t_step)
         end
     end
@@ -181,7 +178,7 @@ The minimization method is chosen by default.
 - `Bool`: true if optimization was successfull
 """
 function compute_mle(hprm::Hyperprm, true_val::DataFrame; t_fixed::Bool=false, t_end::Float64=50.0, t_step::Float64=1.0)
-    result = optimize(x -> -compute_ll(x, hprm, sol_true; t_fixed=t_fixed, t_end=t_end, t_step=t_step), [hprm.a, hprm.n0]) # initialize optimization at true prm values s.th. global min is found
+    result = optimize(x -> -compute_ll(x, hprm, true_val; t_fixed=t_fixed, t_end=t_end, t_step=t_step), [hprm.a, hprm.n0]) # initialize optimization at true prm values s.th. global min is found
     return Optim.minimizer(result), Optim.converged(result)
 end
 
@@ -194,7 +191,7 @@ compute the Fisher information at evaluation point. The Fisher information is gi
 - `Float64`: Fisher information value at given evaluation point
 """
 function compute_fi(eval_pt::Vector{Float64}, hprm::Hyperprm, true_val::DataFrame; t_fixed::Bool=false, t_end::Float64=50.0, t_step::Float64=1.0)
-    H = ForwardDiff.hessian(x -> compute_ll(x, hprm, sol_true; t_fixed=t_fixed, t_end=t_end, t_step=t_step), eval_pt)
+    H = ForwardDiff.hessian(x -> compute_ll(x, hprm, true_val; t_fixed=t_fixed, t_end=t_end, t_step=t_step), eval_pt)
     return tr(-H)
 end
 
