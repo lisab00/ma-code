@@ -55,11 +55,13 @@ function store_ll_data(w0::Float64,n0::Float64,a::Float64,m::Float64,M::Int64,no
 end
 
 """
-    function compute_ll(hprm::Hyperprm, true_val::DataFrame; t_fixed::Bool=false, t_end::Float64=50.0, t_step::Float64=1.0)
+    function compute_ll(x, hprm::Hyperprm, true_val::DataFrame; t_fixed::Bool=false, t_end::Float64=50.0, t_step::Float64=1.0)
 
 compute the log-likelihood in least-squares form for Klausmeier model for data with Gaussian noise. First, simulate Klausmeier model for given hyperparameters and noise level. Then, compare to true trajectories.
+Includes x variables needed for ForwardDiff and Optim.
 
 # Arguments
+- `x`: variables with respect to which is differentiated
 - `hprm::Hyperprm`: parameters for which the Klausmeier simulation is performed
 - `true_val::DataFrame`: true data trajectories. DataFrame with columns "w" and "n".
 - `t_fixed::Bool`: true if we consider a fixed observation time window
@@ -69,9 +71,15 @@ compute the log-likelihood in least-squares form for Klausmeier model for data w
 # Returns
 - `Float`: scalar value of log-likelihood at given grid point 
 """
-function compute_ll(hprm::Hyperprm, true_val::DataFrame; t_fixed::Bool=false, t_end::Float64=50.0, t_step::Float64=1.0)
+function compute_ll(x, hprm::Hyperprm, true_val::DataFrame; t_fixed::Bool=false, t_end::Float64=50.0, t_step::Float64=1.0)
+    a, n0 = x
+    hprm = Hyperprm(hprm.w0, n0, a, hprm.m, hprm.M, hprm.noise)
     pred_val = sol_klausmeier(hprm; t_fixed=t_fixed, t_end=t_end, t_step=t_step)
-    ll = -0.5 * sum((true_val[:,"n"] - pred_val[:,"n"]) .^2) - 0.5 * sum((true_val[:,"w"] - pred_val[:,"w"]) .^2) # add up ll for both trajectories
+    if hprm.noise == 0.0 # then compute expected fisher info
+        ll = -0.5 * sum((true_val[:,"n"] - pred_val[:,"n"]) .^2) - 0.5 * sum((true_val[:,"w"] - pred_val[:,"w"]) .^2) # add up ll for both trajectories
+    else
+        ll = -0.5 * 1/hprm.noise * sum((true_val[:,"n"] - pred_val[:,"n"]) .^2) - 0.5 * 1/hprm.noise * sum((true_val[:,"w"] - pred_val[:,"w"]) .^2) # add up ll for both trajectories
+    end
     return ll
 end
 
@@ -104,7 +112,7 @@ function gen_ll_evals_for_hprm_comb(hprm_true::Hyperprm; t_fixed::Bool=false, t_
             pt = grid[i,j]
             hprm = Hyperprm(hprm_true.w0, pt[2], pt[1], hprm_true.m, hprm_true.M, hprm_true.noise) #w0,n0,a,m,M
             #eval likelihood
-            ll[i,j] = compute_ll(hprm, sol_true; t_fixed=t_fixed, t_end=t_end, t_step=t_step)
+            ll[i,j] = compute_ll([pt[1],pt[2]], hprm_true, sol_true; t_fixed=t_fixed, t_end=t_end, t_step=t_step)
         end
     end
     
@@ -162,32 +170,32 @@ function store_fish_data(w0::Float64,m::Float64,M::Int64,noise::Float64,df::Data
 end
 
 """
-    function compute_ll(x, hprm::Hyperprm, true_val::DataFrame; t_fixed::Bool=false, t_end::Float64=50.0, t_step::Float64=1.0)
+    function compute_mle(hprm::Hyperprm, true_val::DataFrame; t_fixed::Bool=false, t_end::Float64=50.0, t_step::Float64=1.0)
 
-compute the log-likelihood in least-squares form for Klausmeier model for data with Gaussian noise. First, simulate Klausmeier model for given hyperparameters and noise level. Then, compare to true trajectories.
-Includes x variables needed for ForwardDiff.
-
-# Arguments
-- `x`: variables with respect to which is differentiated
-- `hprm::Hyperprm`: parameters for which the Klausmeier simulation is performed
-- `true_val::DataFrame`: true data trajectories. DataFrame with columns "w" and "n".
-- `t_fixed::Bool`: true if we consider a fixed observation time window
-- `t_end::Float64`: end of observation window (if t_fixed=true)
-- `t_step::Float64`: step size with which M observations should be picked (set if t_fixed=false)
+compute the maximum likelihood estimate given data observations by minimizing the negative log-likelihood function using the Optim.jl package.
+The initialization point is chosen as the true parameter combination underlying the data observation to ensure fast convergence to global minimum.
+The minimization method is chosen by default.
 
 # Returns
-- `Float`: scalar value of log-likelihood at given grid point 
+- `Vector{Float64}`: 2-element vector containing the mle [a_mle, n0_mle]
+- `Bool`: true if optimization was successfull
 """
-function compute_ll(x, hprm::Hyperprm, true_val::DataFrame; t_fixed::Bool=false, t_end::Float64=50.0, t_step::Float64=1.0)
-    a, n0 = x
-    hprm = Hyperprm(hprm.w0, n0, a, hprm.m, hprm.M, hprm.noise)
-    pred_val = sol_klausmeier(hprm; t_fixed=t_fixed, t_end=t_end, t_step=t_step)
-    if hprm.noise == 0.0 # then compute expected fisher info
-        ll = -0.5 * sum((true_val[:,"n"] - pred_val[:,"n"]) .^2) - 0.5 * sum((true_val[:,"w"] - pred_val[:,"w"]) .^2) # add up ll for both trajectories
-    else
-        ll = -0.5 * 1/hprm.noise * sum((true_val[:,"n"] - pred_val[:,"n"]) .^2) - 0.5 * 1/hprm.noise * sum((true_val[:,"w"] - pred_val[:,"w"]) .^2) # add up ll for both trajectories
-    end
-    return ll
+function compute_mle(hprm::Hyperprm, true_val::DataFrame; t_fixed::Bool=false, t_end::Float64=50.0, t_step::Float64=1.0)
+    result = optimize(x -> -compute_ll(x, hprm, sol_true; t_fixed=t_fixed, t_end=t_end, t_step=t_step), [hprm.a, hprm.n0]) # initialize optimization at true prm values s.th. global min is found
+    return Optim.minimizer(result), Optim.converged(result)
+end
+
+"""
+    function compute_fi(eval_pt::Vector{Float64}, hprm::Hyperprm, true_val::DataFrame; t_fixed::Bool=false, t_end::Float64=50.0, t_step::Float64=1.0)
+
+compute the Fisher information at evaluation point. The Fisher information is given by the trace of the negative Hessian of the log-likelihood function.
+
+# Returns
+- `Float64`: Fisher information value at given evaluation point
+"""
+function compute_fi(eval_pt::Vector{Float64}, hprm::Hyperprm, true_val::DataFrame; t_fixed::Bool=false, t_end::Float64=50.0, t_step::Float64=1.0)
+    H = ForwardDiff.hessian(x -> compute_ll(x, hprm, sol_true; t_fixed=t_fixed, t_end=t_end, t_step=t_step), eval_pt)
+    return tr(-H)
 end
 
 """
@@ -211,24 +219,34 @@ function gen_all_fish_data(M_vals, noise_vals, m, w0, path; t_fixed::Bool=false,
 
             grid = create_grid()
             fish = zeros(41, 21)
+            success_counter = 0
+            eval_pt_counter = 0
 
             # evaluate fisher info on grid
             for i in range(1, 41)
                 for j in range(1, 21)
+                    eval_pt_counter = eval_pt_counter + 1
 
                     pt = grid[i,j]
-                    hprm = Hyperprm(w0, pt[2], pt[1], m, M, noise) #w0,n0,a,m,M
+                    hprm = Hyperprm(w0, pt[2], pt[1], m, M, noise) # w0,n0,a,m,M
 
                     sol_true = sol_klausmeier(hprm; t_fixed=t_fixed, t_end=t_end, t_step=t_step) # returns df
                     sol_true = randomize_data(sol_true, hprm.noise) # include noise
 
-                    x = [hprm.a, hprm.n0] # Q: put here MLE?
-                    H = ForwardDiff.hessian(x -> compute_ll(x, hprm, sol_true; t_fixed=t_fixed, t_end=t_end, t_step=t_step), x)
-                    FIM = -H
-                    fish_val = tr(FIM)
-                    fish[i,j] = fish_val
+                    if noise == 0.0 # in no noise case stick to true prm combination
+                        mle, success = [hprm.a, hprm.n0], true
+                    else
+                        mle, success = compute_mle(hprm, sol_true; t_fixed=t_fixed, t_end=t_end, t_step=t_step)
+                    end
+
+                    fish[i,j] = compute_fi(mle, hprm, sol_true; t_fixed=t_fixed, t_end=t_end, t_step=t_step)
+
+                    success_counter = success_counter + 1
                 end
             end
+
+            success_fraction = success_counter / eval_pt_counter
+            print("MLE terminated with success in $success_fraction cases.")
             
             #create data frame
             a_eval_pts = string.(0.0:0.1:2.0)
