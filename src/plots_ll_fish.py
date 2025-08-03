@@ -2,12 +2,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 import math
 
-from numpy import inf
-
 # reference: https://github.com/ElisabethRoesch/Bifurcations  
 
 # Part specifically for likelihood
-def get_ll_alps_one(a_ind): 
+def get_a_from_index(a_ind): 
     """
     helper function for ll. Converts index of alpha to actual alpha value (alp_ind is number of alpha value)
 
@@ -17,10 +15,11 @@ def get_ll_alps_one(a_ind):
     Returns:
         actual value for parameter a
     """
-    a = [0.1, 0.9, 1.1, 1.3, 1.7]   # actual a values we have data for
+    a = [0.1, 0.9, 1.1, 1.3, 1.7] # actual a values we have data for
     return a[a_ind-1]
 
-def get_ll_ics_one(ics_ind):
+
+def get_ic_from_index(ics_ind):
     """
     helper function for ll. Converts index of ic to actual ic value (ics_ind is number of ic value)
 
@@ -33,6 +32,7 @@ def get_ll_ics_one(ics_ind):
     ics= [0.2, 0.4, 1.0, 1.3, 2.3] # actual ic values we have data for
     return ics[ics_ind-1]
 
+
 def read_ll_file(w0, n0, a, m, M, noise, path_to_file):
     """
     read in the ll file stored in a specific format.
@@ -40,100 +40,121 @@ def read_ll_file(w0, n0, a, m, M, noise, path_to_file):
     name = "ll"+"_"+str(w0)+"_"+str(n0)+"_"+str(a)+"_"+str(m)+"_"+str(M)+"_"+str(noise)
     ending=".csv"
     csv = np.genfromtxt (path_to_file+name+ending, skip_header=1, delimiter=",")
-    if M<=10:
-        csv[csv == -inf] = -50
-    else:
-        csv[csv == -inf] = -2000
     return csv
 
-def make_ll_plot(fig,ax,csv,ind, sparse, noisy):
+
+def make_ll_plot(fig,ax,csv,ind,lower_bound):
     """
     make single ll plot for index combination ind
+
+    Args:
+        `csv`: returned by reald_ll_file
+        `ind`: index of true parameter point
+        `lower_bound`: lower bound where ll values are cut off
     """
-
-    a_plot_nr = get_ll_alps_one(ind[0])
-    ic_plot_nr = get_ll_ics_one(ind[1])
+    a = get_a_from_index(ind[0])
+    n0 = get_ic_from_index(ind[1])
     
-    # points at which ll data is evaluated
+    # points at which ll data was evaluated
     a_x_ticks = np.arange(0.0, 2.1, 0.1)
-    inits_y_ticks = np.arange(0.0, 4.1, 0.1)
+    n0_y_ticks = np.arange(0.0, 4.1, 0.1)
 
-    # all values below -1000 are mapped to -1000
-    if sparse:
-        levels = np.linspace(-50, 0, 150)
-    elif noisy:
-        levels = np.linspace(math.ceil(np.min(csv)),  0, 150)
-    else:
-        levels = np.linspace(-2000, 0, 150)
+    # all values below are mapped to lower_bound
+    levels = np.linspace(lower_bound, 0, 150)
+
+    contouring=ax.contourf(a_x_ticks, n0_y_ticks, csv,30,cmap='Reds',alpha=0.9,levels=levels)
 
     # mark true prm combination
-    plt.plot([a_plot_nr],[ic_plot_nr],marker="x",label="Truth",color="white",markersize=12,markerfacecolor='gold',markeredgewidth=2.0, markeredgecolor="gold", zorder=10)
+    plt.plot([a],[n0],marker="x",label="true",linestyle="None",markersize=12,markerfacecolor='gold',markeredgewidth=2.0, markeredgecolor="gold", zorder=10)
+    ax.grid(color='grey', linestyle='-',alpha=0.1, linewidth=1)
+    ax.set_facecolor('white')
+    ax.legend()
+    ax.set_xticks(np.arange(0, 2.1, 1.0))  # Only show 0.0, 1.0, 2.0
+    ax.set_yticks(np.arange(2.0, 4.1, 2.0))  # Only show 0.0, 2.0, 4.0
+    plt.xlabel("Water input parameter")
+    plt.ylabel("Biomass IC")
+    cbar = fig.colorbar(contouring, fraction=0.09)
+    cbar.ax.set_ylabel('Log-Likelihood')
+    cbar.set_ticks([lower_bound, lower_bound/2, 0])
+        
+    return contouring
     
-    if (np.isfinite(csv).any()):   
-        ax.grid(color='grey', linestyle='-',alpha=0.1, linewidth=1)
-        ax.set_facecolor('white')
-        countouring=ax.contourf(a_x_ticks, inits_y_ticks, csv,30,cmap='Reds',alpha=0.9,levels=levels)
-        ax.set_yticks(inits_y_ticks[::4])
-        ax.set_xticks(a_x_ticks[::4])
-        plt.xlabel("α")
-        plt.ylabel("IC")
-        cbar = fig.colorbar(countouring, fraction=0.09)
-        cbar.ax.set_ylabel('Log-Likelihood')
-        if sparse:
-            cbar.set_ticks([-50,0])
-        elif noisy:
-            cbar.set_ticks([math.ceil(np.min(csv)),0])
-        else:
-            cbar.set_ticks([-2000, -1000, 0])
-        return countouring
-    else:      
-        print("eieiei")
-        csv[csv == -inf] = -2000
-        countouring=ax.contourf(a_x_ticks, inits_y_ticks, csv,30,cmap='Reds',alpha=0.9,levels=levels)
-        ax.set_yticks(inits_y_ticks[::4])
-        ax.set_xticks(a_x_ticks[::4])
-        plt.xlabel("α")
-        plt.ylabel("IC")
-        cbar = fig.colorbar(countouring,fraction=0.09)
-        cbar.ax.set_ylabel('Log-Likelihood')
-        if sparse:
-            cbar.set_ticks([-50,0])
-        elif noisy:
-            cbar.set_ticks([math.ceil(np.min(csv)),0])
-        else:
-            cbar.set_ticks([-2000, -1000, 0])
-        return("eieieie")
-    
-"""generate all likelihood plots
-"""
-def make_all_ll_plots(index_combos, M_vals, noise_vals, m, w0, path_to_read, path_to_store, store=False):
 
+def make_all_ll_plots(index_combos, M_vals, noise_vals, m, w0, t_fixed, lower_bound, path_to_read, path_to_store, store=False):
+    """
+    create (and store) log-likelihood plots for several points.
+
+    Args:
+        `index_combos`: indices of points whose log-likelihood should be plotted
+        `M_vals`: M values for which ll should be plotted
+        `noise_vals`: noise values for which ll should be plotted
+        `path_to_read`: path to folder where ll file is stored
+        `path_to_store`: path to folder where plot should be stored
+        `store`: set True if plot should be saved as .pdf file
+        `t_fixed`: True if observation time window is fixed
+    """
     for ind in index_combos:
         for M in M_vals:
             for noise in noise_vals:
 
-                if M <= 10:
-                    sparse = True
-                else:
-                    sparse = False
-
-                if noise >= 2.0:
-                    noisy = True
-                else:
-                    noisy = False
-
-                n0 = get_ll_ics_one(ind[1])
-                a = get_ll_alps_one(ind[0])
+                n0 = get_ic_from_index(ind[1])
+                a = get_a_from_index(ind[0])
 
                 csv = read_ll_file(w0,n0,a,m,M,noise,path_to_read)
 
                 fig, ax = plt.subplots()
-                make_ll_plot(fig, ax, csv, ind, sparse, noisy)
-                ax.set_title(f"M={M}, noise={noise}")
-                bif_plot(ax,m)
+
+                make_ll_plot(fig, ax, csv, ind, lower_bound)
+                ax.set_title(f"M={M}, noise={noise}, t_fixed={t_fixed}")
+                #bif_plot(ax,m)
 
                 if store:
                     plt.savefig(f"{path_to_store}ll_{w0}_{n0}_{a}_{m}_{M}_{noise}.pdf", bbox_inches='tight')
+
+
+def ll_grid_plot(ind, noise_vals, M_vals, lower_bound, path_to_read, w0,m):
+    """
+    plot 3x3 grid with log-likelihood plots for given point.
+    M decreases from left to right, noise increases from top to bottom.as_integer_ratio
+
+    Args:
+        `ind`: index of true parameter point
+        `noise_vals`: 3 noise levels, increasing order
+        `M_vals`: 3 M values, decreasing order
+        `lower_bound`: lower bound where ll values are cut off
+        `path_to_read`: path to folder where the csv with the ll values is stored
+
+    Returns:
+        3x3 grid of plots
+    """
+    n0 = get_ic_from_index(ind[1])
+    a = get_a_from_index(ind[0])
+
+    fig, axes = plt.subplots(nrows=3, ncols=3, figsize=(10, 10))
+    
+    # points at which ll data was evaluated
+    a_x_ticks = np.arange(0.0, 2.1, 0.1)
+    n0_y_ticks = np.arange(0.0, 4.1, 0.1)
+
+    # all values below are mapped to lower_bound
+    levels = np.linspace(lower_bound, 0, 150)
+
+    for i in range(0, len(noise_vals)):
+        for j in range(0, len(M_vals)):
+
+            ax = axes[i,j]
+            csv = read_ll_file(w0,n0,a,m,M_vals[j],noise_vals[i],path_to_read)
+            contouring=ax.contourf(a_x_ticks, n0_y_ticks, csv,30,cmap='Reds',alpha=0.9,levels=levels)
+            ax.plot([a],[n0],marker="x",linestyle="None",markersize=12,markerfacecolor='gold',markeredgewidth=2.0, markeredgecolor="gold", zorder=10)
+            ax.set_xticks(np.arange(0, 2.1, 1.0))  # Only show 0.0, 1.0, 2.0
+            ax.set_yticks(np.arange(2.0, 4.1, 2.0))  # Only show 0.0, 2.0, 4.0
+            
+    cbar = fig.colorbar(contouring, ax=axes, orientation='vertical', fraction=0.04, pad=0.04)
+    cbar.set_label("Log-likelihood")
+    cbar.set_ticks([lower_bound, lower_bound/2, 0])
+
+    # Add single figure-wide legend
+    fig.legend(["true"], loc='lower center', ncol=1, bbox_to_anchor=(0.9, 0.85))
 
 
 ## Part specifically for fisher
@@ -232,9 +253,13 @@ def fi_ic(fig, ax, csv, ic):
 
 
 ## Part for both likelihood and fisher
-"""create plot of the bifurcation diagram
-"""
 def bif_plot(ax, m):
+    """
+    create plot of the bifurcation diagram. Plot water input parameter a against biomass equilibria, indicating stability of the branches.
+
+    Args:
+        m: mortality rate of biomass compartment
+    """
     a_vals = np.linspace(2*m, 2, 400)
     n_plus = [n(a, m, True) for a in a_vals]
     n_minus = [n(a, m, False) for a in a_vals]
@@ -250,10 +275,16 @@ def bif_plot(ax, m):
     ax.axhline(0, color='black', lw=0.5)
     ax.axvline(0, color='black', lw=0.5)
 
-"""eval the biomass n equilibria in dependece of a,m (see bifurcation plot)
-"""
-def n(a,m,plus: bool):
 
+def n(a,m,plus: bool):
+    """
+    eval the biomass n equilibria in dependece of a,m (see bifurcation plot).
+
+    Args:
+        a: water input parameter
+        m: plant mortality parameter
+        plus: true, if upper branch of fold bifurcation should be plotted
+    """
     sqrt_term = np.sqrt(a**2 - 4 * m**2)
 
     if plus:
