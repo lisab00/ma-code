@@ -48,7 +48,7 @@ def make_ll_plot(fig,ax,csv,ind,lower_bound):
     make single ll plot for index combination ind
 
     Args:
-        `csv`: returned by reald_ll_file
+        `csv`: returned by read_ll_file
         `ind`: index of true parameter point
         `lower_bound`: lower bound where ll values are cut off
     """
@@ -75,7 +75,7 @@ def make_ll_plot(fig,ax,csv,ind,lower_bound):
     plt.ylabel("Biomass IC")
     cbar = fig.colorbar(contouring, fraction=0.09)
     cbar.ax.set_ylabel('Log-Likelihood')
-    cbar.set_ticks([lower_bound, lower_bound/2, 0])
+    cbar.set_ticks([lower_bound, 0])
         
     return contouring
     
@@ -157,20 +157,23 @@ def ll_grid_plot(ind, noise_vals, M_vals, lower_bound, path_to_read, w0,m):
     fig.legend(["true"], loc='lower center', ncol=1, bbox_to_anchor=(0.9, 0.85))
 
 
+
 ## Part specifically for fisher
-"""read in the fish file stored in a specific format
-"""
 def read_fish_file(w0, m, M, noise, path_to_file):
+    """
+    read in the fish file stored in a specific format
+    """
     name="fish"+"_"+str(w0)+"_"+str(m)+"_"+str(M)+"_"+str(noise)
     ending=".csv"
     csv = np.genfromtxt (path_to_file+name+ending, skip_header=1, delimiter=",")
     return csv
 
-"""create single fisher plot on whole prm grid
-"""
-def make_fish_plot(fig, ax, csv, logging):
 
-    if logging:
+def make_fish_plot(fig, ax, csv, log=True):
+    """
+    create single fisher plot on whole prm grid
+    """
+    if log:
         min_val = np.min(csv)
         if min_val <= 0:
             csv = csv - min_val + 1e-10  # Shift all values so the minimum becomes ~0+
@@ -183,39 +186,114 @@ def make_fish_plot(fig, ax, csv, logging):
     inits_y_ticks = np.arange(0.0, 4.1, 0.1)
 
     # all values below -8 are mapped to -8
-    levels = np.linspace(math.floor(np.min(csv)),  math.ceil(np.max(csv)),20)
+    levels = np.linspace(math.floor(np.min(csv)),  math.ceil(np.max(csv)),150)
 
     #ax.grid(color='grey', linestyle='-',alpha=0.1, linewidth=1)
     #ax.set_facecolor('white')
-    countouring=ax.contourf(a_x_ticks, inits_y_ticks, csv,30,cmap='Blues',alpha=0.9, levels=levels)
+    contouring=ax.contourf(a_x_ticks, inits_y_ticks, csv,30,cmap='Blues',alpha=0.9, levels=levels)
     ax.set_yticks(inits_y_ticks[::4])
     ax.set_xticks(a_x_ticks[::4])
-    ax.set_xlabel("a")
-    ax.set_ylabel("IC")
-    cbar = fig.colorbar(countouring,fraction=0.09)
+    ax.set_xlabel("Water input parameter")
+    ax.set_ylabel("Biomass IC")
+    cbar = fig.colorbar(contouring,fraction=0.09)
     cbar.ax.set_ylabel('Fisher information')
     cbar.set_ticks([math.floor(np.min(csv)), math.ceil(np.max(csv))])
-    return countouring
+    return contouring
 
-"""create fisher plots for all parameter combinations
-"""
-def make_all_fish_plots(M_vals, noise_vals, w0, m, path_to_read, path_to_store, store=False, logging=False):
 
+def make_all_fish_plots(M_vals, noise_vals, w0, m, path_to_read, path_to_store, t_fixed, store=False, log=True):
+    """
+    create (and store) fisher plots for all parameter combinations.
+
+    Args:
+        M_vals: M values for which fi should be plotted
+        noise_vals: noise values for which fi should be plotted
+        path_to_read: path to folder where data is stored
+        path_to_store: path to folder where plot should be stored
+        t_fixed: True if observation time window is fixed
+        store: set True if plot should be saved as pdf
+        log: if True logarithm is applied to data (when values are high)
+    """
     for M in M_vals:
         for noise in noise_vals:
             
             csv = read_fish_file(w0,m,M,noise,path_to_read)
             fig, ax = plt.subplots()
-            make_fish_plot(fig, ax, csv, logging)
-            bif_plot(ax,m)
-            ax.set_title(f"M={M}, noise={noise}, log={logging}")
+            make_fish_plot(fig, ax, csv, log)
+            #bif_plot(ax,m)
+            ax.set_title(f"M={M}, noise={noise}, t_fixed={t_fixed}")
 
             if store: 
                 plt.savefig(f"{path_to_store}fish_{w0}_{m}_{M}_{noise}.pdf", bbox_inches='tight')
 
-"""plots the marginal fisher information, evaluated at every a and summed/ averaged across all ICs
-"""
+
+def fish_grid_plot(noise_vals, M_vals, path_to_read, w0,m,log=True):
+    """
+    plot 3x3 grid with Fisher information plots
+    M decreases from left to right, noise increases from top to bottom.as_integer_ratio
+
+    Args:
+        `noise_vals`: 3 noise levels, increasing order
+        `M_vals`: 3 M values, decreasing order
+        `lower_bound`: lower bound where ll values are cut off
+        `path_to_read`: path to folder where the csv with the ll values is stored
+        `log`: set True to apply log to data (if values are very high)
+        
+    Returns:
+        3x3 grid of plots
+    """
+    fig, axes = plt.subplots(nrows=3, ncols=3, figsize=(10, 10))
+    
+    # points at which fish data was evaluated
+    a_x_ticks = np.arange(0.0, 2.1, 0.1)
+    n0_y_ticks = np.arange(0.0, 4.1, 0.1)
+    upper_bounds = []
+
+    for i in range(0, len(noise_vals)):
+        for j in range(0, len(M_vals)):
+            csv = read_fish_file(w0,m,M_vals[j],noise_vals[i],path_to_read)
+
+            min_val = np.min(csv)
+            if min_val <= 0:
+                csv = csv - min_val + 1e-10  # Shift all values such that the minimum becomes 0+
+
+            # take log data because values are very high
+            if log:
+                csv = np.log(csv)
+    
+            upper_bounds.append(math.ceil(np.max(csv)))
+
+    upper_bound = max(upper_bounds)
+    
+    # all values above are mapped to upper_bound
+    levels = np.linspace(0, upper_bound, 150)
+
+    for i in range(0, len(noise_vals)):
+        for j in range(0, len(M_vals)):
+
+            csv = read_fish_file(w0,m,M_vals[j],noise_vals[i],path_to_read)
+            min_val = np.min(csv)
+            if min_val <= 0:
+                csv = csv - min_val + 1e-10  # Shift all values so the minimum becomes ~0+
+
+            # take log data bec values are very high
+            if log:
+                csv = np.log(csv)
+
+            ax = axes[i,j]
+            contouring=ax.contourf(a_x_ticks, n0_y_ticks, csv,30,cmap='Blues',alpha=0.9,levels=levels)
+            ax.set_xticks(np.arange(0, 2.1, 1.0))  # Only show 0.0, 1.0, 2.0
+            ax.set_yticks(np.arange(2.0, 4.1, 2.0))  # Only show 0.0, 2.0, 4.0
+            
+    cbar = fig.colorbar(contouring, ax=axes, orientation='vertical', fraction=0.04, pad=0.04)
+    cbar.set_label("Fisher information")
+    cbar.set_ticks([0, upper_bound])
+
+
 def fi_avg_ic(fig, ax, csv):
+    """
+    plots the marginal fisher information, evaluated at every a and summed/ averaged across all ICs
+    """
     plt.xlabel("a")
     a_x_ticks = np.arange(0.0, 2.1, 0.1)
     ax.set_xticks(a_x_ticks[::4])
@@ -234,9 +312,10 @@ def fi_avg_ic(fig, ax, csv):
 
     return ic_side
 
-"""plots the marginal fisher information, evaluated at every a and a given IC
-"""
 def fi_ic(fig, ax, csv, ic):
+    """
+    plots the marginal fisher information, evaluated at every a and a given IC
+    """
     plt.xlabel("a")
 
     inits_y_ticks = np.arange(0.0, 4.1, 0.1)
