@@ -15,7 +15,7 @@ def get_a_from_index(a_ind):
     Returns:
         actual value for parameter a
     """
-    a = [0.1, 0.9, 1.1, 1.3, 1.7] # actual a values we have data for
+    a = [0.1, 0.9, 1.1, 1.3, 1.7, 1.9, 0.8] # actual a values we have data for
     return a[a_ind-1]
 
 
