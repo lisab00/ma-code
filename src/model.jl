@@ -39,8 +39,10 @@ end
 """
     function sol_klausmeier(hprm::Hyperprm; t_fixed::Bool=false, t_end::Float64=50.0, t_step::Float64=1.0)
 
-solve/ simulate the klausmeier model for given set of parameters.
-TODO: integration time?
+solve/ simulate the klausmeier model for given set of parameters and select number of observations samples M.
+Integration time window can either be fixed (to t_end) or variable.
+In the former case M denotes the sample density within fixed time window. In the latter case integration time ends after observing M samples of time distance t_step.
+Model is always solved with mesh size 0.1 and M samples are taken equidistantly.
 
 # Arguments
 - `hprm::Hyperprm`: parameters for which the Klausmeier simulation is performed
@@ -65,14 +67,14 @@ function sol_klausmeier(hprm::Hyperprm; t_fixed::Bool=false, t_end::Float64=50.0
 
     prob = ODEProblem(klausmeier!, u0, tspan, p)
     sol = solve(prob,
-        saveat=0.1  # integration time 0.1, save at equidistant range
+        saveat=0.1  # FE step size 0.1, save at equidistant range
     )
     df_sol = DataFrame(time=sol.t, w=sol[1, :], n=sol[2, :])
 
     if t_fixed
-        df_sol = select_M_rows(df_sol, hprm.M) # pick M samples from fixed observation time window
+        df_sol = select_M_rows(df_sol, hprm.M) # pick M equidistant samples from fixed observation time window
     else
-        df_sol = step_M_times(df_sol, M_end, t_step)
+        df_sol = step_M_times(df_sol, M_end, t_step) # pick M consecutive time steps with step size t_step
     end
     
     return df_sol
