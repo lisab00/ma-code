@@ -172,6 +172,10 @@ def read_fish_file(w0, m, M, noise, path_to_file):
 def make_fish_plot(fig, ax, csv, log=True):
     """
     create single fisher plot on whole prm grid
+
+    Args:
+        `csv`: returned by read_fish_file
+        `log`: if True logarithm is applied to data (when values are high)
     """
     if log:
         min_val = np.min(csv)
