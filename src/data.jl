@@ -5,7 +5,7 @@ export gen_all_ll_data, gen_all_fish_data
 """
     function create_grid()
 
-Create the evaluation grid for a function. We evaluate for a in (0,2), n0 in (0,4) on a uniformly spaced grid.
+Create the evaluation grid for a function. We evaluate for a in (0,2), n0 in (0,4) on a uniformly spaced grid with mesh size 0.1
 """
 function create_grid()
     a_vals = 0.0:0.1:2.0
@@ -216,36 +216,39 @@ function gen_all_fish_data(M_vals, noise_vals, m, w0, path; t_fixed::Bool=false,
 
             grid = create_grid()
             fish = zeros(41, 21)
+
+            # keep track of whether the optimization algo terminates successfully when finding the MLE
             success_counter = 0
             eval_pt_counter = 0
 
             # evaluate fisher info on grid
             for i in range(1, 41)
                 for j in range(1, 21)
-                    eval_pt_counter = eval_pt_counter + 1
+                    eval_pt_counter = eval_pt_counter + 1 # total number of optimizations
 
-                    pt = grid[i,j]
+                    pt = grid[i,j] # true observation parameter point
                     hprm = Hyperprm(w0, pt[2], pt[1], m, M, noise) # w0,n0,a,m,M
 
-                    sol_true = sol_klausmeier(hprm; t_fixed=t_fixed, t_end=t_end, t_step=t_step) # returns df
+                    sol_true = sol_klausmeier(hprm; t_fixed=t_fixed, t_end=t_end, t_step=t_step)
                     sol_true = randomize_data(sol_true, hprm.noise) # include noise
 
-                    if noise == 0.0 # in no noise case stick to true prm combination
+                    if noise == 0.0 # in this case stick to true prm combination
                         mle, success = [hprm.a, hprm.n0], true
                     else
                         mle, success = compute_mle(hprm, sol_true; t_fixed=t_fixed, t_end=t_end, t_step=t_step)
                     end
 
+                    # evaluate Fi at MLE
                     fish[i,j] = compute_fi(mle, hprm, sol_true; t_fixed=t_fixed, t_end=t_end, t_step=t_step)
 
-                    success_counter = success_counter + 1
+                    success_counter = success_counter + success # number of successfull optimizations
                 end
             end
 
             success_fraction = success_counter / eval_pt_counter
             println("MLE terminated with success in $success_fraction cases.")
             
-            #create data frame
+            # create data frame
             a_eval_pts = string.(0.0:0.1:2.0)
             df_fish = DataFrame(fish, a_eval_pts)
 
