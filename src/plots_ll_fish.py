@@ -66,7 +66,7 @@ def make_ll_plot(fig,ax,csv,ind,lower_bound):
 
     # mark true prm combination
     plt.plot([a],[n0],marker="x",label="true",linestyle="None",markersize=12,markerfacecolor='gold',markeredgewidth=2.0, markeredgecolor="gold", zorder=10)
-    ax.grid(color='grey', linestyle='-',alpha=0.1, linewidth=1)
+    #ax.grid(color='grey', linestyle='-',alpha=0.1, linewidth=1)
     ax.set_facecolor('white')
     ax.legend()
     ax.set_xticks(np.arange(0, 2.1, 1.0))  # Only show 0.0, 1.0, 2.0
@@ -296,12 +296,16 @@ def fish_grid_plot(noise_vals, M_vals, path_to_read, w0,m,log=True):
 
 def fi_avg_ic(fig, ax, csv):
     """
-    plots the marginal fisher information, evaluated at every a and summed/ averaged across all ICs
+    plots the average marginal fisher information.
+    I.e., a horizontal section in the variable a, for each a showing the average FI across the vertical n0 axis.
+
+    Args:
+        csv: output of read_fish_file
     """
     plt.xlabel("a")
     a_x_ticks = np.arange(0.0, 2.1, 0.1)
     ax.set_xticks(a_x_ticks[::4])
-    ax.set_title(f"Marginal Fisher Information averaged across all n0")
+    ax.set_title(f"Marginal Fisher information averaged across all n0")
 
     finit_sums=[]    
     for j in range(len(csv[1])): #21: for each a
@@ -316,9 +320,15 @@ def fi_avg_ic(fig, ax, csv):
 
     return ic_side
 
+
 def fi_ic(fig, ax, csv, ic):
     """
-    plots the marginal fisher information, evaluated at every a and a given IC
+    plots the marginal fisher information for a given n0. 
+    I.e., a horizontal section in the variable a, showing the FI for all n0 values.
+
+    Args:
+        csv: output of read_fish_file
+        ic: n0 for which marginal FI should be plotted
     """
     plt.xlabel("a")
 
@@ -327,7 +337,7 @@ def fi_ic(fig, ax, csv, ic):
     ind = np.where(np.isclose(inits_y_ticks, ic))[0]
     a_x_ticks = np.arange(0.0, 2.1, 0.1)
     ax.set_xticks(a_x_ticks[::4])
-    ax.set_title(f"Marginal Fisher Information for n0={ic}")
+    ax.set_title(f"Marginal Fisher information for n0={ic}")
     log_fish = np.log(csv[ind[0]])
     
     ic_side = ax.plot(a_x_ticks,log_fish)
