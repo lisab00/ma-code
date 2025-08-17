@@ -31,7 +31,7 @@ function randomize_data(df::DataFrame, noise::Float64)
     if noise == 0.0
         return df
     else
-        Random.seed!(1) # make it reproducible
+        # Random.seed!(1) # make it reproducible
         df[!, "w"] .= df[!, "w"] .+ rand(Normal(0, noise), nrow(df))
         df[!, "n"] .= df[!, "n"] .+ rand(Normal(0, noise), nrow(df))
         return df
