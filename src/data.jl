@@ -16,7 +16,7 @@ function create_grid()
 end
 
 """
-    function randomize_data(df::DataFrame, noise::Float64)
+    function randomize_data!(df::DataFrame, noise::Float64)
 
 add mean-zero Gaussian noise to simulated data.
 
@@ -27,11 +27,10 @@ add mean-zero Gaussian noise to simulated data.
 # Returns
 -`DataFrame`: with randomized data
 """
-function randomize_data(df::DataFrame, noise::Float64)
+function randomize_data!(df::DataFrame, noise::Float64)
     if noise == 0.0
         return df
     else
-        # Random.seed!(1) # make it reproducible
         df[!, "w"] .= df[!, "w"] .+ rand(Normal(0, noise), nrow(df))
         df[!, "n"] .= df[!, "n"] .+ rand(Normal(0, noise), nrow(df))
         return df
@@ -102,7 +101,7 @@ function gen_ll_evals_for_hprm_comb(hprm_true::Hyperprm; t_fixed::Bool=false, t_
 
     grid = create_grid()
     sol_true = sol_klausmeier(hprm_true; t_fixed=t_fixed, t_end=t_end, t_step=t_step) # returns df
-    sol_true = randomize_data(sol_true, hprm_true.noise) # include noise
+    sol_true = randomize_data!(sol_true, hprm_true.noise) # include noise
 
     ll = zeros(41, 21)
 
@@ -230,7 +229,7 @@ function gen_all_fish_data(M_vals, noise_vals, m, w0, path; t_fixed::Bool=false,
                     hprm = Hyperprm(w0, pt[2], pt[1], m, M, noise) # w0,n0,a,m,M
 
                     sol_true = sol_klausmeier(hprm; t_fixed=t_fixed, t_end=t_end, t_step=t_step)
-                    sol_true = randomize_data(sol_true, hprm.noise) # include noise
+                    sol_true = randomize_data!(sol_true, hprm.noise) # include noise
 
                     if noise == 0.0 # in this case stick to true prm combination
                         mle, success = [hprm.a, hprm.n0], true
