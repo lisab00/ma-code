@@ -38,6 +38,60 @@ function randomize_data!(df::DataFrame, noise::Float64)
 end
 
 
+# Maximum likelihood estimation
+"""
+    function compute_mle(hprm::Hyperprm, true_val::DataFrame; t_fixed::Bool=false, t_end::Float64=50.0, t_step::Float64=1.0)
+
+compute the maximum likelihood estimate given data observations by minimizing the negative log-likelihood function using the Optim.jl package.
+The initialization point is chosen as the true parameter combination underlying the data observation to ensure fast convergence to global minimum.
+The minimization method is chosen by default.
+
+# Returns
+- `Vector{Float64}`: 2-element vector containing the mle [a_mle, n0_mle]
+- `Bool`: true if optimization was successfull
+"""
+function compute_mle(hprm::Hyperprm, true_val::DataFrame; t_fixed::Bool=false, t_end::Float64=50.0, t_step::Float64=1.0)
+    result = optimize(x -> -compute_ll(x, hprm, true_val; t_fixed=t_fixed, t_end=t_end, t_step=t_step), [hprm.a, hprm.n0]) # initialize optimization at true prm values s.th. global min is found
+    return Optim.minimizer(result), Optim.converged(result)
+end
+
+"""
+    function mult_restart_mle(N::Int64, hprm::Hyperprm, true_val::DataFrame; t_fixed::Bool=false, t_end::Float64=50.0, t_step::Float64=1.0)
+
+Perform Maximum Likelihood estimation for N different starting points. Goal is to find global minimum
+
+# Inputs
+    - `N::Int64`: number of restarts
+
+# Returns
+    - `Maxtrix`: initial values used in optimization
+    - `Matrix`: computed MLEs
+    - `Vector`: corresponding losses of MLEs
+"""
+function mult_restart_mle(N::Int64, hprm::Hyperprm, true_val::DataFrame; t_fixed::Bool=false, t_end::Float64=50.0, t_step::Float64=1.0)
+    # generate optim start pts
+    inits = hcat(2 .* rand(N), 4 .* rand(N))
+
+    # store mles and corresponding loss
+    mle_vals = zeros(N, 2)
+    mle_loss, inits_loss = zeros(N), zeros(N)
+
+    for i in 1:size(inits, 1)
+        pt = inits[i,:]
+        result = optimize(x -> - compute_ll(x, hprm, true_val; t_fixed=t_fixed, t_end=t_end, t_step=t_step), pt)
+        #display(result)
+        mle_vals[i,:] = Optim.minimizer(result)
+        mle_loss[i] =  Optim.minimum(result)
+        inits_loss[i] = -compute_ll(pt, hprm, true_val; t_fixed=t_fixed, t_end=t_end, t_step=t_step)
+    end
+
+    # extract best
+    best_loss, best_loss_ind = findmin(mle_loss)
+
+    return inits, inits_loss, mle_vals, mle_loss, best_loss_ind
+end
+
+
 # Functions for the likelihood analysis
 """
     function store_ll_data(w0::Float64,n0::Float64,a::Float64,m::Float64,M::Int64,noise::Float64,df::DataFrame, path_to_repo)
@@ -163,22 +217,6 @@ Name of form "fish_w0_n0_a_m_M_noise.csv"
 """
 function store_fish_data(w0::Float64,m::Float64,M::Int64,noise::Float64,df::DataFrame, path::String)
     CSV.write("$(path)fish_$(w0)_$(m)_$(M)_$(noise).csv", df)
-end
-
-"""
-    function compute_mle(hprm::Hyperprm, true_val::DataFrame; t_fixed::Bool=false, t_end::Float64=50.0, t_step::Float64=1.0)
-
-compute the maximum likelihood estimate given data observations by minimizing the negative log-likelihood function using the Optim.jl package.
-The initialization point is chosen as the true parameter combination underlying the data observation to ensure fast convergence to global minimum.
-The minimization method is chosen by default.
-
-# Returns
-- `Vector{Float64}`: 2-element vector containing the mle [a_mle, n0_mle]
-- `Bool`: true if optimization was successfull
-"""
-function compute_mle(hprm::Hyperprm, true_val::DataFrame; t_fixed::Bool=false, t_end::Float64=50.0, t_step::Float64=1.0)
-    result = optimize(x -> -compute_ll(x, hprm, true_val; t_fixed=t_fixed, t_end=t_end, t_step=t_step), [hprm.a, hprm.n0]) # initialize optimization at true prm values s.th. global min is found
-    return Optim.minimizer(result), Optim.converged(result)
 end
 
 """
