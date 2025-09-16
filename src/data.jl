@@ -67,6 +67,7 @@ Perform Maximum Likelihood estimation for N different starting points. Goal is t
     - `Maxtrix`: initial values used in optimization
     - `Matrix`: computed MLEs
     - `Vector`: corresponding losses of MLEs
+    - `Vector`: convergence status for each optimization trial
 """
 function mult_restart_mle(N::Int64, hprm::Hyperprm, true_val::DataFrame; t_fixed::Bool=false, t_end::Float64=50.0, t_step::Float64=1.0)
     # generate optim start pts
