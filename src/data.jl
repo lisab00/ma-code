@@ -76,7 +76,7 @@ function mult_restart_mle(N::Int64, hprm::Hyperprm, true_val::DataFrame; t_fixed
     mle_vals = zeros(N, 2)
     mle_loss, inits_loss = zeros(N), zeros(N)
 
-    for i in 1:size(inits, 1)
+    for i in range(1:size(inits, 1))
         pt = inits[i,:]
         result = optimize(x -> - compute_ll(x, hprm, true_val; t_fixed=t_fixed, t_end=t_end, t_step=t_step), pt)
         #display(result)
