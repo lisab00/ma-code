@@ -35,7 +35,7 @@ function compute_sobol_indices(N::Int64, dens_a::Distribution, dens_m::Distribut
 
     # evaluate model on sample matrix
     n, w = zeros(size(samples, 1),M), zeros(size(samples, 1),M)
-    for i in range(1:size(samples, 1)) 
+    for i in 1:size(samples, 1) 
         a, m, w0, n0 = samples[i, :]
         hprm = Src.Hyperprm(w0,n0,a,m,M,0.0) # no noise included
         sol = Src.sol_klausmeier(hprm, t_fixed=t_fixed, t_end=t_end)
