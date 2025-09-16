@@ -50,9 +50,9 @@ The minimization method is chosen by default.
 - `Vector{Float64}`: 2-element vector containing the mle [a_mle, n0_mle]
 - `Bool`: true if optimization was successfull
 """
-function compute_mle(hprm::Hyperprm, true_val::DataFrame; t_fixed::Bool=false, t_end::Float64=50.0, t_step::Float64=1.0)
-    result = optimize(x -> -compute_ll(x, hprm, true_val; t_fixed=t_fixed, t_end=t_end, t_step=t_step), [hprm.a, hprm.n0]) # initialize optimization at true prm values s.th. global min is found
-    return Optim.minimizer(result), Optim.converged(result)
+function compute_mle(hprm::Hyperprm, true_val::DataFrame; t_fixed::Bool=false, t_end::Float64=50.0, t_step::Float64=1.0, N::Int64=5)
+    inits, inits_loss, mles, losses, best_loss_ind, converged = mult_restart_mle(N, hprm, true_val; t_fixed=t_fixed, t_end=t_end, t_step=t_step)
+    return mles[best_loss_ind, :], converged[best_loss_ind]
 end
 
 """
@@ -74,21 +74,22 @@ function mult_restart_mle(N::Int64, hprm::Hyperprm, true_val::DataFrame; t_fixed
 
     # store mles and corresponding loss
     mle_vals = zeros(N, 2)
-    mle_loss, inits_loss = zeros(N), zeros(N)
+    mle_loss, inits_loss, converged = zeros(N), zeros(N), zeros(N)
 
-    for i in 1:size(inits, 1)
+    for i in 1:N
         pt = inits[i,:]
         result = optimize(x -> - compute_ll(x, hprm, true_val; t_fixed=t_fixed, t_end=t_end, t_step=t_step), pt)
         #display(result)
         mle_vals[i,:] = Optim.minimizer(result)
         mle_loss[i] =  Optim.minimum(result)
+        converged[i] = Optim.converged(result)
         inits_loss[i] = -compute_ll(pt, hprm, true_val; t_fixed=t_fixed, t_end=t_end, t_step=t_step)
     end
 
     # extract best
     best_loss, best_loss_ind = findmin(mle_loss)
 
-    return inits, inits_loss, mle_vals, mle_loss, best_loss_ind
+    return inits, inits_loss, mle_vals, mle_loss, best_loss_ind, converged
 end
 
 
