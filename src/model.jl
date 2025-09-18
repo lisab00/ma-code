@@ -53,7 +53,7 @@ Model is always solved with mesh size 0.1 and M samples are taken equidistantly.
 # Returns
 - `DataFrame`: columns "time", "w", "n" represent the simulated state of the compartment at given time step
 """
-function sol_klausmeier(hprm::Hyperprm; t_fixed::Bool=false, t_end::Float64=50.0, t_step::Float64=1.0)
+function sol_klausmeier(hprm::Hyperprm; t_fixed::Bool=false, t_end::Float64=100.0, t_step::Float64=1.0)
     u0 = [hprm.w0; hprm.n0]
     p = [hprm.a; hprm.m]
 
