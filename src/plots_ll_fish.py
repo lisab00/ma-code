@@ -263,12 +263,18 @@ def fish_grid_plot(noise_vals, M_vals, path_to_read, w0,m,log=True):
         for j in range(0, len(M_vals)):
             csv = read_fish_file(w0,m,M_vals[j],noise_vals[i],path_to_read)
 
-            min_val = np.min(csv)
-            if min_val <= 0:
-                csv = csv - min_val + 1e-10  # Shift all values such that the minimum becomes 0+
-
-            # take log data because values are very high
             if log:
+                #min_val = np.min(csv)
+                #if min_val <= 0:
+                 #   csv = csv - min_val + 1e-10  # Shift all values such that the minimum becomes 0+
+                
+                # Find the smallest strictly positive value
+                positive_min = np.min(csv[csv > 0])
+
+                # Replace all negative (and zero) values with positive_min
+                csv = np.where(csv <= 0, positive_min, csv)
+                
+                # take log data because values are very high
                 csv = np.log(csv)
     
             upper_bounds.append(math.ceil(np.max(csv)))
