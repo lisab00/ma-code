@@ -178,9 +178,15 @@ def make_fish_plot(fig, ax, csv, log=True):
         `log`: if True logarithm is applied to data (when values are high)
     """
     if log:
-        min_val = np.min(csv)
-        if min_val <= 0:
-            csv = csv - min_val + 1e-10  # Shift all values so the minimum becomes ~0+
+        #min_val = np.min(csv)
+        #if min_val <= 0:
+         #   csv = csv - min_val + 1e-10  # Shift all values so the minimum becomes ~0+
+         
+        # Find the smallest strictly positive value
+        positive_min = np.min(csv[csv > 0])
+
+        # Replace all negative (and zero) values with positive_min
+        csv = np.where(csv <= 0, positive_min, csv)
 
         # take log data bec values are very high
         csv = np.log(csv)
