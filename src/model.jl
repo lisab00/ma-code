@@ -37,7 +37,7 @@ function klausmeier!(du,u,p,t)
 end
 
 """
-    function sol_klausmeier(hprm::Hyperprm; t_fixed::Bool=false, t_end::Float64=50.0, t_step::Float64=1.0)
+    function sol_klausmeier(hprm::Hyperprm; t_fixed::Bool=false, t_end::Float64=50.0, t_step::Float64=1.0, obs_late::Bool=false, t_obs::Float64=50.0)
 
 solve/ simulate the klausmeier model for given set of parameters and select number of observations samples M.
 Integration time window can either be fixed (to t_end) or variable.
@@ -53,7 +53,7 @@ Model is always solved with mesh size 0.1 and M samples are taken equidistantly.
 # Returns
 - `DataFrame`: columns "time", "w", "n" represent the simulated state of the compartment at given time step
 """
-function sol_klausmeier(hprm::Hyperprm; t_fixed::Bool=false, t_end::Float64=100.0, t_step::Float64=1.0)
+function sol_klausmeier(hprm::Hyperprm; t_fixed::Bool=false, t_end::Float64=100.0, t_step::Float64=1.0, obs_late::Bool=false, t_obs::Float64=50.0)
     u0 = [hprm.w0; hprm.n0]
     p = [hprm.a; hprm.m]
 
@@ -75,6 +75,10 @@ function sol_klausmeier(hprm::Hyperprm; t_fixed::Bool=false, t_end::Float64=100.
         df_sol = select_M_rows(df_sol, hprm.M) # pick M equidistant samples from fixed observation time window
     else
         df_sol = step_M_times(df_sol, M_end, t_step) # pick M consecutive time steps with step size t_step
+    end
+
+    if obs_late # only return observations starting at time step obs_ind
+        df_sol = df_sol[df_sol.time .>= t_obs, :]
     end
     
     return df_sol
