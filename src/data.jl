@@ -50,8 +50,8 @@ The minimization method is chosen by default.
 - `Vector{Float64}`: 2-element vector containing the mle [a_mle, n0_mle]
 - `Bool`: true if optimization was successfull
 """
-function compute_mle(hprm::Hyperprm, true_val::DataFrame; t_fixed::Bool=false, t_end::Float64=50.0, t_step::Float64=1.0, N::Int64=5)
-    inits, inits_loss, mles, losses, best_loss_ind, converged = mult_restart_mle(N, hprm, true_val; t_fixed=t_fixed, t_end=t_end, t_step=t_step)
+function compute_mle(hprm::Hyperprm, true_val::DataFrame; t_fixed::Bool=false, t_end::Float64=50.0, t_step::Float64=1.0, obs_late::Bool=false, t_obs::Float64=100.0, N::Int64=5)
+    inits, inits_loss, mles, losses, best_loss_ind, converged = mult_restart_mle(N, hprm, true_val; t_fixed=t_fixed, t_end=t_end, t_step=t_step, obs_late=obs_late, t_obs=t_obs)
     return mles[best_loss_ind, :], converged[best_loss_ind]
 end
 
@@ -71,7 +71,7 @@ Perform Maximum Likelihood estimation for N different starting points. Goal is t
     - `Int`: index of optimization trial creating minimal loss
     - `Vector`: convergence status for each optimization trial
 """
-function mult_restart_mle(N::Int64, hprm::Hyperprm, true_val::DataFrame; t_fixed::Bool=false, t_end::Float64=50.0, t_step::Float64=1.0)
+function mult_restart_mle(N::Int64, hprm::Hyperprm, true_val::DataFrame; t_fixed::Bool=false, t_end::Float64=50.0, t_step::Float64=1.0, obs_late::Bool=false, t_obs::Float64=100.0)
     # generate optim start pts
     inits = hcat(2 .* rand(N), 4 .* rand(N))
 
@@ -81,12 +81,12 @@ function mult_restart_mle(N::Int64, hprm::Hyperprm, true_val::DataFrame; t_fixed
 
     for i in 1:N
         pt = inits[i,:]
-        result = optimize(x -> - compute_ll(x, hprm, true_val; t_fixed=t_fixed, t_end=t_end, t_step=t_step), pt)
+        result = optimize(x -> - compute_ll(x, hprm, true_val; t_fixed=t_fixed, t_end=t_end, t_step=t_step, obs_late=obs_late, t_obs=t_obs), pt)
         #display(result)
         mle_vals[i,:] = Optim.minimizer(result)
         mle_loss[i] =  Optim.minimum(result)
         converged[i] = Optim.converged(result)
-        inits_loss[i] = -compute_ll(pt, hprm, true_val; t_fixed=t_fixed, t_end=t_end, t_step=t_step)
+        inits_loss[i] = -compute_ll(pt, hprm, true_val; t_fixed=t_fixed, t_end=t_end, t_step=t_step, obs_late=obs_late, t_obs=t_obs)
     end
 
     # extract best
@@ -128,10 +128,10 @@ Includes x variables needed for ForwardDiff and Optim.
 # Returns
 - `Float`: scalar value of log-likelihood at given grid point 
 """
-function compute_ll(x, hprm::Hyperprm, true_val::DataFrame; t_fixed::Bool=false, t_end::Float64=50.0, t_step::Float64=1.0)
+function compute_ll(x, hprm::Hyperprm, true_val::DataFrame; t_fixed::Bool=false, t_end::Float64=50.0, t_step::Float64=1.0, obs_late::Bool=false, t_obs::Float64=100.0)
     a, n0 = x
     hprm = Hyperprm(hprm.w0, n0, a, hprm.m, hprm.M, hprm.noise)
-    pred_val = sol_klausmeier(hprm; t_fixed=t_fixed, t_end=t_end, t_step=t_step)
+    pred_val = sol_klausmeier(hprm; t_fixed=t_fixed, t_end=t_end, t_step=t_step, obs_late=obs_late, t_obs=t_obs)
     if hprm.noise == 0.0
         ll = -0.5 * sum((true_val[:,"n"] - pred_val[:,"n"]) .^2) - 0.5 * sum((true_val[:,"w"] - pred_val[:,"w"]) .^2) # add up ll for both trajectories
     else
@@ -155,10 +155,10 @@ evaluates log-likelihood on grid for one (a,n0,M,noise) hyperprm combination. Ru
 # Returns
 -`DataFrame`: DataFrame of log-likelihood evaluated on grid for given parameter combination
 """
-function gen_ll_evals_for_hprm_comb(hprm_true::Hyperprm; t_fixed::Bool=false, t_end::Float64=50.0, t_step::Float64=1.0)
+function gen_ll_evals_for_hprm_comb(hprm_true::Hyperprm; t_fixed::Bool=false, t_end::Float64=50.0, t_step::Float64=1.0, obs_late::Bool=false, t_obs::Float64=100.0)
 
     grid = create_grid()
-    sol_true = sol_klausmeier(hprm_true; t_fixed=t_fixed, t_end=t_end, t_step=t_step) # returns df
+    sol_true = sol_klausmeier(hprm_true; t_fixed=t_fixed, t_end=t_end, t_step=t_step, obs_late=obs_late, t_obs=t_obs) # returns df
     sol_true = randomize_data!(sol_true, hprm_true.noise) # include noise
 
     ll = zeros(41, 21)
@@ -166,7 +166,7 @@ function gen_ll_evals_for_hprm_comb(hprm_true::Hyperprm; t_fixed::Bool=false, t_
     for i in range(1, 41)
         for j in range(1, 21) #eval for each point on grid
             pt = grid[i,j]
-            ll[i,j] = compute_ll([pt[1],pt[2]], hprm_true, sol_true; t_fixed=t_fixed, t_end=t_end, t_step=t_step)
+            ll[i,j] = compute_ll(pt, hprm_true, sol_true; t_fixed=t_fixed, t_end=t_end, t_step=t_step, obs_late=obs_late, t_obs=t_obs)
         end
     end
     
@@ -193,14 +193,14 @@ function that generates and stores all the ll data needed. On all a,n0,M,noise p
 - `t_end::Float64`: end of observation window (if t_fixed=true)
 - `t_step::Float64`: step size with which M observations should be picked (set if t_fixed=false)
 """
-function gen_all_ll_data(index_combos::Vector{Vector{Int64}}, M_vals::Vector{Int64}, noise_vals::Vector{Float64}, m::Float64, w0::Float64, path::String; t_fixed::Bool=false, t_end::Float64=50.0, t_step::Float64=1.0)
+function gen_all_ll_data(index_combos::Vector{Vector{Int64}}, M_vals::Vector{Int64}, noise_vals::Vector{Float64}, m::Float64, w0::Float64, path::String; t_fixed::Bool=false, t_end::Float64=50.0, t_step::Float64=1.0, obs_late::Bool=false, t_obs::Float64=100.0)
     for ind in index_combos
         for M in M_vals
             for noise in noise_vals
                 a_ind = ind[1]
                 n0_ind = ind[2]
                 hprm = Hyperprm(w0, n0_vals[n0_ind], a_vals[a_ind], m, M, noise)
-                df_ll = gen_ll_evals_for_hprm_comb(hprm; t_fixed=t_fixed, t_end=t_end, t_step=t_step)
+                df_ll = gen_ll_evals_for_hprm_comb(hprm; t_fixed=t_fixed, t_end=t_end, t_step=t_step, obs_late=obs_late, t_obs=t_obs)
                 store_ll_data(w0, n0_vals[n0_ind], a_vals[a_ind], m, M, noise, df_ll, path)
             end
         end
@@ -231,8 +231,8 @@ compute the Fisher information at evaluation point. The Fisher information is gi
 # Returns
 - `Float64`: Fisher information value at given evaluation point
 """
-function compute_fi(eval_pt::Vector{Float64}, hprm::Hyperprm, true_val::DataFrame; t_fixed::Bool=false, t_end::Float64=50.0, t_step::Float64=1.0)
-    H = ForwardDiff.hessian(x -> compute_ll(x, hprm, true_val; t_fixed=t_fixed, t_end=t_end, t_step=t_step), eval_pt)
+function compute_fi(eval_pt::Vector{Float64}, hprm::Hyperprm, true_val::DataFrame; t_fixed::Bool=false, t_end::Float64=50.0, t_step::Float64=1.0, obs_late::Bool=false, t_obs::Float64=100.0)
+    H = ForwardDiff.hessian(x -> compute_ll(x, hprm, true_val; t_fixed=t_fixed, t_end=t_end, t_step=t_step, obs_late=obs_late, t_obs=t_obs), eval_pt)
     return tr(-H)
 end
 
@@ -251,7 +251,7 @@ function that generates and stores all the fish data needed. On all a,n0,M,noise
 - `t_end::Float64`: end of observation window (if t_fixed=true)
 - `t_step::Float64`: step size with which M observations should be picked (set if t_fixed=false)
 """
-function gen_all_fish_data(M_vals, noise_vals, m, w0, path; t_fixed::Bool=false, t_end::Float64=50.0, t_step::Float64=1.0)
+function gen_all_fish_data(M_vals, noise_vals, m, w0, path; t_fixed::Bool=false, t_end::Float64=50.0, t_step::Float64=1.0, obs_late::Bool=false, t_obs::Float64=100.0)
     for M in M_vals
         for noise in noise_vals
 
@@ -270,17 +270,17 @@ function gen_all_fish_data(M_vals, noise_vals, m, w0, path; t_fixed::Bool=false,
                     pt = grid[i,j] # true observation parameter point
                     hprm = Hyperprm(w0, pt[2], pt[1], m, M, noise) # w0,n0,a,m,M
 
-                    sol_true = sol_klausmeier(hprm; t_fixed=t_fixed, t_end=t_end, t_step=t_step)
+                    sol_true = sol_klausmeier(hprm; t_fixed=t_fixed, t_end=t_end, t_step=t_step, obs_late=obs_late, t_obs=t_obs)
                     sol_true = randomize_data!(sol_true, hprm.noise) # include noise
 
                     if noise == 0.0 # in this case stick to true prm combination
                         mle, success = [hprm.a, hprm.n0], true
                     else
-                        mle, success = compute_mle(hprm, sol_true; t_fixed=t_fixed, t_end=t_end, t_step=t_step)
+                        mle, success = compute_mle(hprm, sol_true; t_fixed=t_fixed, t_end=t_end, t_step=t_step, obs_late=obs_late, t_obs=t_obs)
                     end
 
                     # evaluate Fi at MLE
-                    fish[i,j] = compute_fi(mle, hprm, sol_true; t_fixed=t_fixed, t_end=t_end, t_step=t_step)
+                    fish[i,j] = compute_fi(mle, hprm, sol_true; t_fixed=t_fixed, t_end=t_end, t_step=t_step, obs_late=obs_late, t_obs=t_obs)
 
                     success_counter = success_counter + success # number of successfull optimizations
                 end
