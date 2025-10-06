@@ -264,33 +264,37 @@ function that generates and stores all the fish data needed. On all a,n0,M,noise
 - `t_end::Float64`: end of observation window (if t_fixed=true)
 - `t_step::Float64`: step size with which M observations should be picked (set if t_fixed=false)
 """
-function gen_all_fish_data(prm_keys::Vector, M_vals, noise_vals, m, w0, path; t_fixed::Bool=false, t_end::Float64=50.0, t_step::Float64=1.0, obs_late::Bool=false, t_obs::Float64=100.0)
+function gen_all_fish_data(prm_keys::Vector, M_vals::Vector, noise_vals::Vector, path::String; a::Float64=1.3, m::Float64=0.45, n0::Float64=1.0, w0::Float64=1.0, t_fixed::Bool=false, t_end::Float64=50.0, t_step::Float64=1.0, obs_late::Bool=false, t_obs::Float64=100.0)
     for M in M_vals
         for noise in noise_vals
 
             grid = create_grid()
-            fish = zeros(41, 21)
+            fish = zeros(201, 201)
 
             # keep track of whether the optimization algo terminates successfully when finding the MLE
             success_counter = 0
             eval_pt_counter = 0
 
             # evaluate fisher info on grid
-            for i in range(1, 41)
-                for j in range(1, 21)
+            for i in range(1, 201)
+                for j in range(1, 201)
                     eval_pt_counter = eval_pt_counter + 1 # total number of optimizations
 
                     pt = grid[i,j] # true observation parameter point
-                    hprm = Hyperprm(w0, pt[2], pt[1], m, M, noise) # w0,n0,a,m,M
+
+                    # assign point values to prm_keys
+                    prms = Dict(zip(prm_keys, pt))
+                    a_val  = get(prms, :a, a)
+                    n0_val = get(prms, :n0, n0)
+                    m_val  = get(prms, :m, m)
+                    w0_val = get(prms, :w0, w0)
+
+                    hprm = Hyperprm(w0_val, n0_val, a_val, m_val, M, noise)
 
                     sol_true = sol_klausmeier(hprm; t_fixed=t_fixed, t_end=t_end, t_step=t_step, obs_late=obs_late, t_obs=t_obs)
                     sol_true = randomize_data!(sol_true, hprm.noise) # include noise
 
-                    if noise == 0.0 # in this case stick to true prm combination
-                        mle, success = [hprm.a, hprm.n0], true
-                    else
-                        mle, success = compute_mle(prm_keys, hprm, sol_true; t_fixed=t_fixed, t_end=t_end, t_step=t_step, obs_late=obs_late, t_obs=t_obs)
-                    end
+                    mle, success = compute_mle(prm_keys, hprm, sol_true; t_fixed=t_fixed, t_end=t_end, t_step=t_step, obs_late=obs_late, t_obs=t_obs)
 
                     # evaluate Fi at MLE
                     fish[i,j] = compute_fi(mle, prm_keys, hprm, sol_true; t_fixed=t_fixed, t_end=t_end, t_step=t_step, obs_late=obs_late, t_obs=t_obs)
@@ -303,8 +307,8 @@ function gen_all_fish_data(prm_keys::Vector, M_vals, noise_vals, m, w0, path; t_
             println("MLE terminated with success in $success_fraction cases.")
             
             # create data frame
-            a_eval_pts = string.(0.0:0.1:2.0)
-            df_fish = DataFrame(fish, a_eval_pts)
+            x_eval_pts = string.(0.0:0.01:2.0)
+            df_fish = DataFrame(fish, x_eval_pts)
 
             store_fish_data(w0, m, M, noise, df_fish, path)
         end

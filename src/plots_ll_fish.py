@@ -192,8 +192,8 @@ def make_fish_plot(fig, ax, csv, log=True):
         csv = np.log(csv)
 
     # points at which fish data is evaluated
-    a_x_ticks = np.arange(0.0, 2.1, 0.1)
-    inits_y_ticks = np.arange(0.0, 4.1, 0.1)
+    a_x_ticks = np.arange(0.0, 2.1, 0.01)
+    inits_y_ticks = np.arange(0.0, 2.1, 0.01)
 
     # all values below -8 are mapped to -8
     levels = np.linspace(math.floor(np.min(csv)),  math.ceil(np.max(csv)),150)
