@@ -1,3 +1,5 @@
+export Hyperprm
+
 """
     Hyperprm <: AbstractHyperprm
 
