@@ -45,7 +45,7 @@ function assess_practical_identifiability(prm_keys::Vector, hprm::Hyperprm; t_fi
     # compute MLE via multiple restart optimizations
     inits, inits_loss, mles, losses, best_loss_ind, converged = mult_restart_mle(N, prm_keys, hprm, sol_true, t_fixed=t_fixed, t_end=t_end, t_step=t_step, obs_late=obs_late, t_obs=t_obs)
     mle = mles[best_loss_ind,:]
-    plot_mles = plot_mult_restart_mles(inits, mles, best_loss_ind, prm_keys, N=N)
+    plot_mles = plot_mult_restart_mles(inits, mles, best_loss_ind, prm_keys, hprm, N=N)
     plot_losses = plot_mult_restart_losses(inits_loss, losses,best_loss_ind, N=N)
 
     # compute covariance/ correlation Matrix
@@ -109,7 +109,7 @@ Plot the results of multiple-restart MLEs for given parameters, highlighting the
     - `compare::Bool=true`: If true, plots initial values alongside the MLEs
     - `N::Int64=20`: Number of restarts
 """
-function plot_mult_restart_mles(inits::Matrix, mles::Matrix, ind_best::Int64, prm_keys::Vector; compare::Bool=true, N::Int64=20)
+function plot_mult_restart_mles(inits::Matrix, mles::Matrix, ind_best::Int64, prm_keys::Vector, hprm::Hyperprm; compare::Bool=true, N::Int64=20)
 
     n_prms = length(prm_keys)
     
@@ -199,7 +199,7 @@ function plot_gaussian(mle::Vector, cov::Matrix, prm_keys::Vector)
 
     if length(mle) == 1
         dens = Normal(mle[1], sqrt(cov[1]))
-        x = range(mle[1] - 3*sqrt(cov[1,1]), mle[1] + 3*sqrt(cov[1,1]), length=500)
+        x = range(mle[1] - 3*sqrt(cov[1,1]), mle[1] + 3*sqrt(cov[1,1]), length=1000)
         pdf_evals = pdf.(dens, x)
         surface_plot = plot(x,pdf_evals, xlabel=prm_keys[1], linewidth=2, color="#165DB1", label="")
         heatmap_plot = nothing
@@ -213,8 +213,8 @@ function plot_gaussian(mle::Vector, cov::Matrix, prm_keys::Vector)
         
         # plotting ranges
         d = max(3*sqrt(cov[1,1]),3*sqrt(cov[2,2])) # make axes comparable
-        a = range(mle[1]-d, mle[1]+d, length=500)
-        m = range(mle[2]-d, mle[2]+d, length=500)
+        a = range(mle[1]-d, mle[1]+d, length=1000)
+        m = range(mle[2]-d, mle[2]+d, length=1000)
         pdf_evals = [pdf(dens, [ai, mi]) for mi in m, ai in a]
 
         # create heatmap
