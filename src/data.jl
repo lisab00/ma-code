@@ -72,11 +72,15 @@ Perform Maximum Likelihood estimation for N different starting points. Goal is t
     - `Vector`: convergence status for each optimization trial
 """
 function mult_restart_mle(N::Int64, prm_keys::Vector, hprm::Hyperprm, true_val::DataFrame; t_fixed::Bool=false, t_end::Float64=50.0, t_step::Float64=1.0, obs_late::Bool=false, t_obs::Float64=100.0)
-    # generate optim start pts
-    inits = hcat(2 .* rand(N), 4 .* rand(N))
+    
+    # number of parameters to optimize
+    n_prms = length(prm_keys)   
+
+    # generate random optimization start pts
+    inits = hcat([2 .* rand(N) for _ in 1:n_prms]...)  
 
     # store mles and corresponding loss
-    mle_vals = zeros(N, 2)
+    mle_vals = zeros(N, n_prms)
     mle_loss, inits_loss, converged = zeros(N), zeros(N), zeros(N)
 
     for i in 1:N
