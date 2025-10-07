@@ -10,5 +10,6 @@ module Src
     include("model.jl") # code related to the klausmeier model
     include("data.jl") # code related to the compuatation of the log-likelihood and fisher information
     include("sobol.jl") # code related to gsa using sobol indices
+    include("identifiability.jl") # code related to practical identifiability analysis
 
 end # module
