@@ -205,7 +205,7 @@ function plot_gaussian(mle::Vector, cov::Matrix, prm_keys::Vector)
         heatmap_plot = nothing
     else
         # set custom color gradient
-        tum_blues = [ "#D7E4F4", "#C2D7EF", "#9ABCE4", "#5E94D4", "#165DB1", "#14519A", "#114584", "#0E396E", "#0A2D57", "#072140"]
+        tum_blues = ["#D7E4F4", "#C2D7EF", "#9ABCE4", "#5E94D4", "#165DB1", "#14519A", "#114584", "#0E396E"]
         tum_cgrad = cgrad(tum_blues, categorical=false)
 
         cov = Symmetric((cov + cov') / 2) # ensure numerical stability
