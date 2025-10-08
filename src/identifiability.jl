@@ -1,4 +1,4 @@
-export assess_practical_identifiability
+export assess_practical_identifiability, analyze_ll
 
 # implements whole routine, experiment to be called by user
 """
@@ -63,6 +63,11 @@ function assess_practical_identifiability(prm_keys::Vector, hprm::Hyperprm; t_fi
         gaussian_heatmap = gaussian_heatmap,
         gaussian_surface = gaussian_surface,
     )
+end
+
+function analyze_ll(mle::Vector, prm_keys::Vector, hprm_true::Hyperprm, cutoff::Int64; t_fixed::Bool=false, t_end::Float64=50.0, t_step::Float64=1.0, obs_late::Bool=false, t_obs::Float64=100.0)
+    ll_data = gen_ll_evals(prm_keys, hprm_true, t_fixed=t_fixed, t_end=t_end, t_step=t_step, obs_late=obs_late, t_obs=t_obs)
+    return plot_ll(ll_data, cutoff,mle, prm_keys)
 end
 
 
