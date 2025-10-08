@@ -14,5 +14,6 @@ module Src
     include("data.jl") # code related to the compuatation of the log-likelihood and fisher information
     include("sobol.jl") # code related to gsa using sobol indices
     include("identifiability.jl") # code related to practical identifiability analysis
+    include("plots_ll_fish.jl") # code related to plotting the ll and fisher surfaces
 
 end # module

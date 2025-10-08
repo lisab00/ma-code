@@ -1,4 +1,4 @@
-export gen_all_ll_data, gen_all_fish_data
+export gen_store_ll_data, gen_all_fish_data
 
 
 # Tools
@@ -155,40 +155,47 @@ function compute_ll(x::Vector, prm_keys::Vector, hprm::Hyperprm, true_val::DataF
 end
 
 """
-    function gen_ll_evals_for_hprm_comb(hprm_true::Hyperprm; t_fixed::Bool=false, t_end::Float64=50.0, t_step::Float64=1.0)
+    function gen_ll_evals(prm_keys::Vector, hprm_true::Hyperprm; t_fixed::Bool=false, t_end::Float64=50.0, t_step::Float64=1.0, obs_late::Bool=false, t_obs::Float64=100.0)
 
-evaluates log-likelihood on grid for one (a,n0,M,noise) hyperprm combination. Run this for all hyperprm combinations wanted, helper function
+Evaluates the log-likelihood evaluations of parameters for visualization or identifiability analysis.
 
 # Arguments
-- `hprm::Hyperprm`: parameters for which the Klausmeier simulation is performed
-- `true_val::DataFrame`: true data trajectories. DataFrame with columns "w" and "n".
-- `t_fixed::Bool`: true if we consider a fixed observation time window
-- `t_end::Float64`: end of observation window (if t_fixed=true)
-- `t_step::Float64`: step size with which M observations should be picked (set if t_fixed=false)
+    - `prm_keys::Vector`: Names of the two parameters to evaluate on the grid
+    - `hprm_true::Hyperprm`: True hyperparameter values used to simulate data
+    - `t_fixed::Bool=false`: True if a fixed observation time window is considered
+    - `t_end::Float64=50.0`: End of the observation window (if t_fixed=true)
+    - `t_step::Float64=1.0`: Step size for observations (if t_fixed=false)
+    - `obs_late::Bool=false`: True if only late (stable state) observations are considered
+    - `t_obs::Float64=100.0`: Time at which late observations are taken if `obs_late=true`
 
 # Returns
--`DataFrame`: DataFrame of log-likelihood evaluated on grid for given parameter combination
+    - A `DataFrame` containing the log-likelihood values over the 2D parameter grid
 """
-function gen_ll_evals_for_hprm_comb(prm_keys::Vector, hprm_true::Hyperprm; t_fixed::Bool=false, t_end::Float64=50.0, t_step::Float64=1.0, obs_late::Bool=false, t_obs::Float64=100.0)
-
-    grid = create_grid()
-    sol_true = sol_klausmeier(hprm_true; t_fixed=t_fixed, t_end=t_end, t_step=t_step, obs_late=obs_late, t_obs=t_obs) # returns df
-    sol_true = randomize_data!(sol_true, hprm_true.noise) # include noise
-
-    ll = zeros(201, 201)
-
-    for i in range(1, 201)
-        for j in range(1, 201) #eval for each point on grid
-            pt = grid[i,j]
-            ll[i,j] = compute_ll([pt[1],pt[2]], prm_keys, hprm_true, sol_true; t_fixed=t_fixed, t_end=t_end, t_step=t_step, obs_late=obs_late, t_obs=t_obs)
-        end
-    end
+function gen_ll_evals(prm_keys::Vector, hprm_true::Hyperprm; t_fixed::Bool=false, t_end::Float64=50.0, t_step::Float64=1.0, obs_late::Bool=false, t_obs::Float64=100.0)
     
-    #return data frame
-    x_eval_pts = string.(0.0:0.01:2.0)
-    df_ll = DataFrame(ll, x_eval_pts)
+    # create true data observations
+    sol_true = sol_klausmeier(hprm_true; t_fixed=t_fixed, t_end=t_end, t_step=t_step, obs_late=obs_late, t_obs=t_obs) # returns df
+    sol_true = randomize_data!(sol_true, hprm_true.noise)
 
-    return df_ll
+    if length(prm_keys)==2
+        grid = create_grid()
+        ll = zeros(size(grid, 1), size(grid, 2))
+        for i in range(1, size(grid, 1))
+            for j in range(1, size(grid, 2)) #eval for each point on grid
+                pt = grid[i,j]
+                ll[i,j] = compute_ll([pt[1],pt[2]], prm_keys, hprm_true, sol_true; t_fixed=t_fixed, t_end=t_end, t_step=t_step, obs_late=obs_late, t_obs=t_obs)
+            end
+        end
+        return DataFrame(ll,:auto)
+    else
+        xr = 0.0:0.01:2.0
+        ll = zeros(length(xr))
+        for i in range(1, length(xr))
+            pt = xr[i]
+            ll[i] = compute_ll([pt[1]], prm_keys, hprm_true, sol_true; t_fixed=t_fixed, t_end=t_end, t_step=t_step, obs_late=obs_late, t_obs=t_obs)
+        end
+        return DataFrame(ll=ll)
+    end
 end
 
 """
@@ -207,7 +214,7 @@ function that generates and stores all the ll data needed. On all a,n0,M,noise p
 - `t_end::Float64`: end of observation window (if t_fixed=true)
 - `t_step::Float64`: step size with which M observations should be picked (set if t_fixed=false)
 """
-function gen_all_ll_data(points::Vector{Vector{Float64}}, prm_keys::Vector, M_vals::Vector{Int64}, noise_vals::Vector{Float64}, path::String; a::Float64=1.3, m::Float64=0.45, n0::Float64=1.0, w0::Float64=1.0, t_fixed::Bool=false, t_end::Float64=50.0, t_step::Float64=1.0, obs_late::Bool=false, t_obs::Float64=100.0)
+function gen_store_ll_data(points::Vector{Vector{Float64}}, prm_keys::Vector, M_vals::Vector{Int64}, noise_vals::Vector{Float64}, path::String; a::Float64=1.3, m::Float64=0.45, n0::Float64=1.0, w0::Float64=1.0, t_fixed::Bool=false, t_end::Float64=50.0, t_step::Float64=1.0, obs_late::Bool=false, t_obs::Float64=100.0)
     for pt in points
         for M in M_vals
             for noise in noise_vals
@@ -217,7 +224,7 @@ function gen_all_ll_data(points::Vector{Vector{Float64}}, prm_keys::Vector, M_va
                 m_val = get(prms, :m, m)
                 w0_val = get(prms, :w0, w0)
                 hprm = Hyperprm(w0_val, n0_val, a_val, m_val, M, noise)
-                df_ll = gen_ll_evals_for_hprm_comb(prm_keys, hprm; t_fixed=t_fixed, t_end=t_end, t_step=t_step, obs_late=obs_late, t_obs=t_obs)
+                df_ll = gen_ll_evals(prm_keys, hprm; t_fixed=t_fixed, t_end=t_end, t_step=t_step, obs_late=obs_late, t_obs=t_obs)
                 store_ll_data(w0_val, n0_val, a_val, m_val, M, noise, df_ll, path)
             end
         end
@@ -236,8 +243,8 @@ Name of form "fish_w0_n0_a_m_M_noise.csv"
 - `df::DataFrame`: df to store
 - `path_to_repo::String`: path to folder where to store the file
 """
-function store_fish_data(w0::Float64,m::Float64,M::Int64,noise::Float64,df::DataFrame, path::String)
-    CSV.write("$(path)fish_$(w0)_$(m)_$(M)_$(noise).csv", df)
+function store_fish_data(M::Int64,noise::Float64,df::DataFrame, path::String)
+    CSV.write("$(path)fish_$(M)_$(noise).csv", df)
 end
 
 """
@@ -268,6 +275,8 @@ function that generates and stores all the fish data needed. On all a,n0,M,noise
 - `t_end::Float64`: end of observation window (if t_fixed=true)
 - `t_step::Float64`: step size with which M observations should be picked (set if t_fixed=false)
 """
+
+# brauch ich das? ggf noch erweitern auf 1D parameter
 function gen_all_fish_data_prm_plane(prm_keys::Vector, M_vals::Vector, noise_vals::Vector, path::String; a::Float64=1.3, m::Float64=0.45, n0::Float64=1.0, w0::Float64=1.0, t_fixed::Bool=false, t_end::Float64=50.0, t_step::Float64=1.0, obs_late::Bool=false, t_obs::Float64=100.0)
     for M in M_vals
         for noise in noise_vals
@@ -314,12 +323,13 @@ function gen_all_fish_data_prm_plane(prm_keys::Vector, M_vals::Vector, noise_val
             x_eval_pts = string.(0.0:0.01:2.0)
             df_fish = DataFrame(fish, x_eval_pts)
 
-            store_fish_data(w0, m, M, noise, df_fish, path)
+            store_fish_data(M, noise, df_fish, path)
         end
     end
 end
 
-function gen_all_fish_data_an0_plane(prm_keys::Vector, M_vals::Vector, noise_vals::Vector, path::String; m::Float64=0.45, w0::Float64=1.0, t_fixed::Bool=false, t_end::Float64=50.0, t_step::Float64=1.0, obs_late::Bool=false, t_obs::Float64=100.0)
+
+function gen_all_fish_data_an0_plane(prm_keys::Vector, M_vals::Vector, noise_vals::Vector, path::String; m::Float64=0.45, w0::Float64=1.0, t_fixed::Bool=false, t_end::Float64=50.0, t_step::Float64=1.0, obs_late::Bool=false, t_obs::Float64=100.0, N::Int64=5)
     for M in M_vals
         for noise in noise_vals
 
@@ -341,7 +351,7 @@ function gen_all_fish_data_an0_plane(prm_keys::Vector, M_vals::Vector, noise_val
                     sol_true = sol_klausmeier(hprm; t_fixed=t_fixed, t_end=t_end, t_step=t_step, obs_late=obs_late, t_obs=t_obs)
                     sol_true = randomize_data!(sol_true, hprm.noise) # include noise
 
-                    mle, success = compute_mle(prm_keys, hprm, sol_true; t_fixed=t_fixed, t_end=t_end, t_step=t_step, obs_late=obs_late, t_obs=t_obs)
+                    mle, success = compute_mle(prm_keys, hprm, sol_true; t_fixed=t_fixed, t_end=t_end, t_step=t_step, obs_late=obs_late, t_obs=t_obs, N=N)
 
                     # evaluate Fi at MLE
                     fish[i,j] = compute_fi(mle, prm_keys, hprm, sol_true; t_fixed=t_fixed, t_end=t_end, t_step=t_step, obs_late=obs_late, t_obs=t_obs)
@@ -357,7 +367,7 @@ function gen_all_fish_data_an0_plane(prm_keys::Vector, M_vals::Vector, noise_val
             a_eval_pts = string.(0.0:0.01:2.0)
             df_fish = DataFrame(fish, a_eval_pts)
 
-            store_fish_data(w0, m, M, noise, df_fish, path)
+            store_fish_data(M, noise, df_fish, path)
         end
     end
 end
