@@ -50,7 +50,7 @@ The minimization method is chosen by default.
 - `Vector{Float64}`: 2-element vector containing the mle [a_mle, n0_mle]
 - `Bool`: true if optimization was successfull
 """
-function compute_mle(prm_keys::Vector, hprm::Hyperprm, true_val::DataFrame; t_fixed::Bool=false, t_end::Float64=50.0, t_step::Float64=1.0, obs_late::Bool=false, t_obs::Float64=100.0, N::Int64=5)
+function compute_mle(prm_keys::Vector, hprm::Hyperprm, true_val::DataFrame; t_fixed::Bool=false, t_end::Float64=100.0, t_step::Float64=1.0, obs_late::Bool=false, t_obs::Float64=100.0, N::Int64=5)
     inits, inits_loss, mles, losses, best_loss_ind, converged = mult_restart_mle(N, prm_keys, hprm, true_val; t_fixed=t_fixed, t_end=t_end, t_step=t_step, obs_late=obs_late, t_obs=t_obs)
     return mles[best_loss_ind, :], converged[best_loss_ind]
 end
@@ -71,7 +71,7 @@ Perform Maximum Likelihood estimation for N different starting points. Goal is t
     - `Int`: index of optimization trial creating minimal loss
     - `Vector`: convergence status for each optimization trial
 """
-function mult_restart_mle(N::Int64, prm_keys::Vector, hprm::Hyperprm, true_val::DataFrame; t_fixed::Bool=false, t_end::Float64=50.0, t_step::Float64=1.0, obs_late::Bool=false, t_obs::Float64=100.0)
+function mult_restart_mle(N::Int64, prm_keys::Vector, hprm::Hyperprm, true_val::DataFrame; t_fixed::Bool=false, t_end::Float64=100.0, t_step::Float64=1.0, obs_late::Bool=false, t_obs::Float64=100.0)
     
     # number of parameters to optimize
     n_prms = length(prm_keys)   
@@ -132,7 +132,7 @@ Includes x variables needed for ForwardDiff and Optim.
 # Returns
 - `Float`: scalar value of log-likelihood at given grid point 
 """
-function compute_ll(x::Vector, prm_keys::Vector, hprm::Hyperprm, true_val::DataFrame; t_fixed::Bool=false, t_end::Float64=50.0, t_step::Float64=1.0, obs_late::Bool=false, t_obs::Float64=100.0)
+function compute_ll(x::Vector, prm_keys::Vector, hprm::Hyperprm, true_val::DataFrame; t_fixed::Bool=false, t_end::Float64=100.0, t_step::Float64=1.0, obs_late::Bool=false, t_obs::Float64=100.0)
 
     # determine which parameters are of interest
     prms = Dict(zip(prm_keys, x)) # returnd dict with parameter name and value given by x
@@ -171,7 +171,7 @@ Evaluates the log-likelihood evaluations of parameters for visualization or iden
 # Returns
     - A `DataFrame` containing the log-likelihood values over the 2D parameter grid
 """
-function gen_ll_evals(prm_keys::Vector, hprm_true::Hyperprm; t_fixed::Bool=false, t_end::Float64=50.0, t_step::Float64=1.0, obs_late::Bool=false, t_obs::Float64=100.0)
+function gen_ll_evals(prm_keys::Vector, hprm_true::Hyperprm; t_fixed::Bool=false, t_end::Float64=100.0, t_step::Float64=1.0, obs_late::Bool=false, t_obs::Float64=100.0)
     
     # create true data observations
     sol_true = sol_klausmeier(hprm_true; t_fixed=t_fixed, t_end=t_end, t_step=t_step, obs_late=obs_late, t_obs=t_obs) # returns df
@@ -214,7 +214,7 @@ function that generates and stores all the ll data needed. On all a,n0,M,noise p
 - `t_end::Float64`: end of observation window (if t_fixed=true)
 - `t_step::Float64`: step size with which M observations should be picked (set if t_fixed=false)
 """
-function gen_store_ll_data(points::Vector{Vector{Float64}}, prm_keys::Vector, M_vals::Vector{Int64}, noise_vals::Vector{Float64}, path::String; a::Float64=1.3, m::Float64=0.45, n0::Float64=1.0, w0::Float64=1.0, t_fixed::Bool=false, t_end::Float64=50.0, t_step::Float64=1.0, obs_late::Bool=false, t_obs::Float64=100.0)
+function gen_store_ll_data(points::Vector{Vector{Float64}}, prm_keys::Vector, M_vals::Vector{Int64}, noise_vals::Vector{Float64}, path::String; a::Float64=1.3, m::Float64=0.45, n0::Float64=1.0, w0::Float64=1.0, t_fixed::Bool=false, t_end::Float64=100.0, t_step::Float64=1.0, obs_late::Bool=false, t_obs::Float64=100.0)
     for pt in points
         for M in M_vals
             for noise in noise_vals
@@ -255,7 +255,7 @@ compute the Fisher information at evaluation point. The Fisher information is gi
 # Returns
 - `Float64`: Fisher information value at given evaluation point
 """
-function compute_fi(eval_pt::Vector{Float64}, prm_keys::Vector, hprm::Hyperprm, true_val::DataFrame; t_fixed::Bool=false, t_end::Float64=50.0, t_step::Float64=1.0, obs_late::Bool=false, t_obs::Float64=100.0)
+function compute_fi(eval_pt::Vector{Float64}, prm_keys::Vector, hprm::Hyperprm, true_val::DataFrame; t_fixed::Bool=false, t_end::Float64=100.0, t_step::Float64=1.0, obs_late::Bool=false, t_obs::Float64=100.0)
     H = ForwardDiff.hessian(x -> compute_ll(x, prm_keys, hprm, true_val; t_fixed=t_fixed, t_end=t_end, t_step=t_step, obs_late=obs_late, t_obs=t_obs), eval_pt)
     return tr(-H)
 end
@@ -277,7 +277,7 @@ function that generates and stores all the fish data needed. On all a,n0,M,noise
 """
 
 # brauch ich das? ggf noch erweitern auf 1D parameter
-function gen_all_fish_data_prm_plane(prm_keys::Vector, M_vals::Vector, noise_vals::Vector, path::String; a::Float64=1.3, m::Float64=0.45, n0::Float64=1.0, w0::Float64=1.0, t_fixed::Bool=false, t_end::Float64=50.0, t_step::Float64=1.0, obs_late::Bool=false, t_obs::Float64=100.0)
+function gen_all_fish_data_prm_plane(prm_keys::Vector, M_vals::Vector, noise_vals::Vector, path::String; a::Float64=1.3, m::Float64=0.45, n0::Float64=1.0, w0::Float64=1.0, t_fixed::Bool=false, t_end::Float64=100.0, t_step::Float64=1.0, obs_late::Bool=false, t_obs::Float64=100.0)
     for M in M_vals
         for noise in noise_vals
 
@@ -329,7 +329,7 @@ function gen_all_fish_data_prm_plane(prm_keys::Vector, M_vals::Vector, noise_val
 end
 
 
-function gen_all_fish_data_an0_plane(prm_keys::Vector, M_vals::Vector, noise_vals::Vector, path::String; m::Float64=0.45, w0::Float64=1.0, t_fixed::Bool=false, t_end::Float64=50.0, t_step::Float64=1.0, obs_late::Bool=false, t_obs::Float64=100.0, N::Int64=5)
+function gen_all_fish_data_an0_plane(prm_keys::Vector, M_vals::Vector, noise_vals::Vector, path::String; m::Float64=0.45, w0::Float64=1.0, t_fixed::Bool=false, t_end::Float64=100.0, t_step::Float64=1.0, obs_late::Bool=false, t_obs::Float64=100.0, N::Int64=5)
     for M in M_vals
         for noise in noise_vals
 

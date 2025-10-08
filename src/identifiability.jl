@@ -36,7 +36,7 @@ and Fisher information approximations.
     - `gaussian_heatmap`: Heatmap of the Gaussian (Fisher) approximation of parameter uncertainties
     - `gaussian_surface`: Surface plot of the Gaussian (Fisher) approximation of parameter uncertainties
  """       
-function assess_practical_identifiability(prm_keys::Vector, hprm::Hyperprm; t_fixed::Bool=false, t_end::Float64=50.0, t_step::Float64=1.0, obs_late::Bool=false, t_obs::Float64=100.0, N::Int64=20)
+function assess_practical_identifiability(prm_keys::Vector, hprm::Hyperprm; t_fixed::Bool=false, t_end::Float64=100.0, t_step::Float64=1.0, obs_late::Bool=false, t_obs::Float64=100.0, N::Int64=20)
     
     # create data observations and include noise
     sol_true = sol_klausmeier(hprm; t_fixed=t_fixed, t_end=t_end, t_step=t_step, obs_late=obs_late, t_obs=t_obs)
@@ -65,7 +65,7 @@ function assess_practical_identifiability(prm_keys::Vector, hprm::Hyperprm; t_fi
     )
 end
 
-function analyze_ll(mle::Vector, prm_keys::Vector, hprm_true::Hyperprm, cutoff::Int64; t_fixed::Bool=false, t_end::Float64=50.0, t_step::Float64=1.0, obs_late::Bool=false, t_obs::Float64=100.0)
+function analyze_ll(mle::Vector, prm_keys::Vector, hprm_true::Hyperprm, cutoff::Int64; t_fixed::Bool=false, t_end::Float64=100.0, t_step::Float64=1.0, obs_late::Bool=false, t_obs::Float64=100.0)
     ll_data = gen_ll_evals(prm_keys, hprm_true, t_fixed=t_fixed, t_end=t_end, t_step=t_step, obs_late=obs_late, t_obs=t_obs)
     return plot_ll(ll_data, cutoff,mle, prm_keys)
 end
@@ -94,7 +94,7 @@ We take the inverse of the Hessian of the negative log likelihood as approximati
     - `cor`: Correlation matrix of the parameters at `eval_pt`
     - `cov`: Covariance matrix of the parameters at `eval_pt`
 """
-function correlation_covariance_matrix(eval_pt::Vector{Float64}, prm_keys::Vector, hprm::Hyperprm, true_val::DataFrame; t_fixed::Bool=false, t_end::Float64=50.0, t_step::Float64=1.0, obs_late::Bool=false, t_obs::Float64=100.0)
+function correlation_covariance_matrix(eval_pt::Vector{Float64}, prm_keys::Vector, hprm::Hyperprm, true_val::DataFrame; t_fixed::Bool=false, t_end::Float64=100.0, t_step::Float64=1.0, obs_late::Bool=false, t_obs::Float64=100.0)
     fim = - ForwardDiff.hessian(x -> compute_ll(x, prm_keys, hprm, true_val; t_fixed=t_fixed, t_end=t_end, t_step=t_step, obs_late=obs_late, t_obs=t_obs), eval_pt)
     cov = inv(fim)
     cor = [cov[i,j] / sqrt(cov[i,i]*cov[j,j]) for i in range(1, size(cov,1)), j in range(1, size(cov,2))]
