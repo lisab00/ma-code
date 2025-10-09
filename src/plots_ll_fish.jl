@@ -1,3 +1,5 @@
+export plot_ll_grid, plot_fisher_grid
+
 """
     function plot_ll(evals_df::DataFrame, cutoff::Int64, mle::Vector, prm_keys::Vector)
 
@@ -22,7 +24,7 @@ function plot_ll(evals_df::DataFrame, cutoff::Int64, mle::Vector, prm_keys::Vect
 
         p = heatmap(rx, ry, evals_cutoff, alpha=0.9, xlabel=prm_keys[1], ylabel=prm_keys[2], title="Log-Likelihood", color=tum_cgrad, colorbar=false)
         contour!(rx, ry, evals_cutoff, linewidth=1, color=tum_cgrad, levels=300, label=false)
-        scatter!([mle[1]],[mle[2]], markershape=:x, markerstrokewidth=5, markersize=8, color="#F7811E", label="MLE")
+        scatter!([mle[1]],[mle[2]], markershape=:x, markerstrokewidth=3, markersize=6, color="#F7811E", label="MLE")
     else
         rx = 0.0:0.01:2.0
         evals = evals_df[:,1]
@@ -63,7 +65,7 @@ function plot_ll_grid(point::Vector, prm_keys::Vector, noise_vals::Vector, M_val
     for i in 1:3  # noise increases top→bottom
         for j in 1:3  # M decreases left→right
             ll = read_ll_file(w0_val, n0_val, a_val, m_val, M_vals[j], noise_vals[i], path_to_read)
-            p = Src.plot_ll(ll, cutoff, point, prm_keys)
+            p = plot_ll(ll, cutoff, point, prm_keys)
             plots_matrix[i, j] = p
         end
     end

@@ -1,4 +1,4 @@
-export gen_store_ll_data, gen_all_fish_data
+export gen_store_ll_data, gen_all_fish_data_an0_plane
 
 
 # Tools
