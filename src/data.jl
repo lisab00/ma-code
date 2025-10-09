@@ -5,7 +5,7 @@ export gen_store_ll_data, gen_all_fish_data_an0_plane
 """
     function create_grid()
 
-Create the evaluation grid for a function. We evaluate for a in (0,2), n0 in (0,4) on a uniformly spaced grid with mesh size 0.1
+Create the evaluation grid for a function. We evaluate for x,y in (0,2) on a uniformly spaced grid with mesh size 0.01
 """
 function create_grid()
     x_vals = 0.0:0.01:2.0
@@ -21,11 +21,11 @@ end
 add mean-zero Gaussian noise to simulated data.
 
 # Arguments
-- `df::DataFrame`: data to add noise on
-- `noise::Float64`: noise level sigma^2 (i.e. variance of Gaussian)
+    - `df::DataFrame`: data to add noise on
+    - `noise::Float64`: noise level sigma^2 (i.e. variance of Gaussian)
 
 # Returns
--`DataFrame`: with randomized data
+    -`DataFrame`: with randomized data
 """
 function randomize_data!(df::DataFrame, noise::Float64)
     if noise == 0.0
@@ -40,15 +40,25 @@ end
 
 # Maximum likelihood estimation
 """
-    function compute_mle(hprm::Hyperprm, true_val::DataFrame; t_fixed::Bool=false, t_end::Float64=50.0, t_step::Float64=1.0)
+    function compute_mle(prm_keys::Vector, hprm::Hyperprm, true_val::DataFrame; t_fixed::Bool=false, t_end::Float64=100.0, t_step::Float64=1.0, obs_late::Bool=false, t_obs::Float64=100.0, N::Int64=5)
 
 compute the maximum likelihood estimate given data observations by minimizing the negative log-likelihood function using the Optim.jl package.
-The initialization point is chosen as the true parameter combination underlying the data observation to ensure fast convergence to global minimum.
-The minimization method is chosen by default.
+We employ multiple restart optimization to obtain a robust estimate.
+
+# Arguments
+    - `prm_keys::Vector`: Names of the parameters to be estimated (e.g., `[:a, :m]`)
+    - `hprm::Hyperprm`: Hyperparameter struct defining the true underlying model and noise characteristics
+    - `true_val::DataFrame`: Observed data used for likelihood computation
+    - `t_fixed::Bool=false`: True if fixed observation time window is considered
+    - `t_end::Float64=100.0`: End of observation window (used if `t_fixed=true`)
+    - `t_step::Float64=1.0`: Time step for observation sampling (used if `t_fixed=false`)
+    - `obs_late::Bool=false`: If true, only use observations starting at time `t_obs`
+    - `t_obs::Float64=100.0`: Time at which late observations begin (used if `obs_late=true`)
+    - `N::Int64=5`: Number of random restarts in the optimization procedure
 
 # Returns
-- `Vector{Float64}`: 2-element vector containing the mle [a_mle, n0_mle]
-- `Bool`: true if optimization was successfull
+    - `Vector{Float64}`: vector containing the MLE (e.g., `[a_mle, m_mle]`)
+    - `Bool`: `true` if the optimization converged successfully
 """
 function compute_mle(prm_keys::Vector, hprm::Hyperprm, true_val::DataFrame; t_fixed::Bool=false, t_end::Float64=100.0, t_step::Float64=1.0, obs_late::Bool=false, t_obs::Float64=100.0, N::Int64=5)
     inits, inits_loss, mles, losses, best_loss_ind, converged = mult_restart_mle(N, prm_keys, hprm, true_val; t_fixed=t_fixed, t_end=t_end, t_step=t_step, obs_late=obs_late, t_obs=t_obs)
@@ -56,12 +66,15 @@ function compute_mle(prm_keys::Vector, hprm::Hyperprm, true_val::DataFrame; t_fi
 end
 
 """
-    function mult_restart_mle(N::Int64, hprm::Hyperprm, true_val::DataFrame; t_fixed::Bool=false, t_end::Float64=50.0, t_step::Float64=1.0)
+    function mult_restart_mle(N::Int64, prm_keys::Vector, hprm::Hyperprm, true_val::DataFrame; t_fixed::Bool=false, t_end::Float64=100.0, t_step::Float64=1.0, obs_late::Bool=false, t_obs::Float64=100.0)
+ 
+Perform Maximum Likelihood estimation for N different starting points. Goal is to find global minimum.
 
-Perform Maximum Likelihood estimation for N different starting points. Goal is to find global minimum
-
-# Inputs
-    - `N::Int64`: number of restarts
+# Arguments
+    - `N::Int64`: Number of random restart trials
+    - `prm_keys::Vector`: Names of parameters to be estimated (e.g., `[:a, :n0]`)
+    - `hprm::Hyperprm`: Hyperparameter struct defining model configuration and noise
+    - `true_val::DataFrame`: Observed data used for likelihood evaluation
 
 # Returns
     - `Matrix`: initial values used in optimization
@@ -102,35 +115,33 @@ end
 
 # Functions for the likelihood analysis
 """
-    function store_ll_data(w0::Float64,n0::Float64,a::Float64,m::Float64,M::Int64,noise::Float64,df::DataFrame, path_to_repo)
+    function store_ll_data(w0::Float64,n0::Float64,a::Float64,m::Float64,M::Int64,noise::Float64,df::DataFrame, path_to_store::String)
 
 stores data evaluated on grid in a csv file.
 Name of form "ll_w0_n0_a_m_M_noise.csv"
 
 # Arguments
-- `df::DataFrame`: df to store
-- `path_to_repo::String`: path to folder where to store the file
+    - `df::DataFrame`: df to store
+    - `path_to_repo::String`: path to folder where to store the file
 """
 function store_ll_data(w0::Float64,n0::Float64,a::Float64,m::Float64,M::Int64,noise::Float64,df::DataFrame, path_to_store::String)
     CSV.write("$(path_to_store)ll_$(w0)_$(n0)_$(a)_$(m)_$(M)_$(noise).csv", df)
 end
 
 """
-    function compute_ll(x, hprm::Hyperprm, true_val::DataFrame; t_fixed::Bool=false, t_end::Float64=50.0, t_step::Float64=1.0)
+    function compute_ll(x::Vector, prm_keys::Vector, hprm::Hyperprm, true_val::DataFrame; t_fixed::Bool=false, t_end::Float64=100.0, t_step::Float64=1.0, obs_late::Bool=false, t_obs::Float64=100.0)
 
 compute the log-likelihood in least-squares form for Klausmeier model for data with Gaussian noise. First, simulate Klausmeier model for given hyperparameters and noise level. Then, compare to true trajectories.
 Includes x variables needed for ForwardDiff and Optim.
 
 # Arguments
-- `x`: variables with respect to which is differentiated
-- `hprm::Hyperprm`: parameters for which the Klausmeier simulation is performed
-- `true_val::DataFrame`: true data trajectories. DataFrame with columns "w" and "n".
-- `t_fixed::Bool`: true if we consider a fixed observation time window
-- `t_end::Float64`: end of observation window (if t_fixed=true)
-- `t_step::Float64`: step size with which M observations should be picked (set if t_fixed=false)
+    - `x::Vector`: Parameter values (in order specified by `prm_keys`) used in the likelihood computation
+    - `prm_keys::Vector`: Names of parameters to be estimated (e.g., `[:a, :m]`)
+    - `hprm::Hyperprm`: Hyperparameter struct defining model constants and noise level
+    - `true_val::DataFrame`: Observed trajectories with columns `"w"` and `"n"`
 
 # Returns
-- `Float`: scalar value of log-likelihood at given grid point 
+    - `Float`: scalar value of log-likelihood at given grid point 
 """
 function compute_ll(x::Vector, prm_keys::Vector, hprm::Hyperprm, true_val::DataFrame; t_fixed::Bool=false, t_end::Float64=100.0, t_step::Float64=1.0, obs_late::Bool=false, t_obs::Float64=100.0)
 
@@ -155,8 +166,8 @@ function compute_ll(x::Vector, prm_keys::Vector, hprm::Hyperprm, true_val::DataF
 end
 
 """
-    function gen_ll_evals(prm_keys::Vector, hprm_true::Hyperprm; t_fixed::Bool=false, t_end::Float64=50.0, t_step::Float64=1.0, obs_late::Bool=false, t_obs::Float64=100.0)
-
+    function gen_ll_evals(prm_keys::Vector, hprm_true::Hyperprm; t_fixed::Bool=false, t_end::Float64=100.0, t_step::Float64=1.0, obs_late::Bool=false, t_obs::Float64=100.0)
+ 
 Evaluates the log-likelihood evaluations of parameters for visualization or identifiability analysis.
 
 # Arguments
@@ -199,20 +210,33 @@ function gen_ll_evals(prm_keys::Vector, hprm_true::Hyperprm; t_fixed::Bool=false
 end
 
 """
-    function gen_all_ll_data(index_combos::Vector{Vector{Int64}}, M_vals::Vector{Int64}, noise_vals::Vector{Float64}, m::Float64, w0::Float64, path::String; t_fixed::Bool=false, t_end::Float64=50.0, t_step::Float64=1.0)
+    function gen_store_ll_data(points::Vector{Vector{Float64}}, prm_keys::Vector, M_vals::Vector{Int64}, noise_vals::Vector{Float64}, path::String; a::Float64=1.3, m::Float64=0.45, n0::Float64=1.0, w0::Float64=1.0, t_fixed::Bool=false, t_end::Float64=100.0, t_step::Float64=1.0, obs_late::Bool=false, t_obs::Float64=100.0)
 
 function that generates and stores all the ll data needed. On all a,n0,M,noise prm combinations specifed.
 
 # Arguments
-- `index_combos::Vector{Vector{Int64}}`: indices of parameter values underlying true data observations.
-- `M_val::Vector{Int64}`: sample sizes
-- `noise_vals::Vector{Float64}`: noise levels
-- `m::Float64`: mortality rate in Klausmeier model (fixed)
-- `w0::Float64`: initial value for water compartment in Klausmeier model (fixed)
-- `path::String`: path to folder where ll data is stored
-- `t_fixed::Bool`: true if we consider a fixed observation time window
-- `t_end::Float64`: end of observation window (if t_fixed=true)
-- `t_step::Float64`: step size with which M observations should be picked (set if t_fixed=false)
+    - `points::Vector{Vector{Float64}}`: Parameter grid points (e.g. combinations of `[a, m]`) for which LL data are computed
+    - `prm_keys::Vector`: Names of parameters corresponding to each entry in `points`
+    - `M_vals::Vector{Int64}`: Sample sizes used in simulations
+    - `noise_vals::Vector{Float64}`: Noise levels
+    - `path::String`: Path to the folder where ll data will be stored
+
+# Keyword Arguments
+    - `a::Float64=1.3`: Default water input rate in the Klausmeier model (used if not included in `prm_keys`)
+    - `m::Float64=0.45`: Mortality rate (fixed unless included in `prm_keys`)
+    - `n0::Float64=1.0`: Initial nutrient concentration (fixed unless included in `prm_keys`)
+    - `w0::Float64=1.0`: Initial water concentration (fixed unless included in `prm_keys`)
+    - `t_fixed::Bool=false`: If true, simulate over a fixed time window `[0, t_end]`
+    - `t_end::Float64=100.0`: End time of observation window (if `t_fixed=true`)
+    - `t_step::Float64=1.0`: Time step between observations (if `t_fixed=false`)
+    - `obs_late::Bool=false`: If true, use only observations taken in the steady-state regime
+    - `t_obs::Float64=100.0`: Time at which late observations are taken (if `obs_late=true`)
+
+# Description
+For each combination of `(a, n0, M, noise)`, this function:
+    1. Builds the corresponding `Hyperprm` object.
+    2. Computes log-likelihood evaluations using `gen_ll_evals`.
+    3. Saves the resulting data to the specified directory using `store_ll_data`.
 """
 function gen_store_ll_data(points::Vector{Vector{Float64}}, prm_keys::Vector, M_vals::Vector{Int64}, noise_vals::Vector{Float64}, path::String; a::Float64=1.3, m::Float64=0.45, n0::Float64=1.0, w0::Float64=1.0, t_fixed::Bool=false, t_end::Float64=100.0, t_step::Float64=1.0, obs_late::Bool=false, t_obs::Float64=100.0)
     for pt in points
@@ -234,26 +258,32 @@ end
 
 # Functions for the fisher analysis
 """
-    function store_fish_data(w0::Float64,m::Float64,M::Int64,noise::Float64,df::DataFrame, path::String)
+    function store_fish_data(M::Int64,noise::Float64,df::DataFrame, path::String)
 
 stores data evaluated on grid in a csv file.
-Name of form "fish_w0_n0_a_m_M_noise.csv"
+Name of form "fish_M_noise.csv"
 
 # Arguments
-- `df::DataFrame`: df to store
-- `path_to_repo::String`: path to folder where to store the file
+    - `df::DataFrame`: df to store
+    - `path_to_repo::String`: path to folder where to store the file
 """
 function store_fish_data(M::Int64,noise::Float64,df::DataFrame, path::String)
     CSV.write("$(path)fish_$(M)_$(noise).csv", df)
 end
 
 """
-    function compute_fi(eval_pt::Vector{Float64}, hprm::Hyperprm, true_val::DataFrame; t_fixed::Bool=false, t_end::Float64=50.0, t_step::Float64=1.0)
+    function compute_fi(eval_pt::Vector{Float64}, prm_keys::Vector, hprm::Hyperprm, true_val::DataFrame; t_fixed::Bool=false, t_end::Float64=100.0, t_step::Float64=1.0, obs_late::Bool=false, t_obs::Float64=100.0)
 
 compute the Fisher information at evaluation point. The Fisher information is given by the trace of the negative Hessian of the log-likelihood function.
 
+# Arguments
+    - `eval_pt::Vector{Float64}`: Parameter vector at which FI is evaluated
+    - `prm_keys::Vector`: Names of parameters corresponding to entries in `eval_pt`
+    - `hprm::Hyperprm`: Model hyperparameters used for simulation and likelihood computation
+    - `true_val::DataFrame`: Observed (noisy) trajectories with columns `"w"` and `"n"`
+
 # Returns
-- `Float64`: Fisher information value at given evaluation point
+    - `Float64`: Fisher information value at given evaluation point
 """
 function compute_fi(eval_pt::Vector{Float64}, prm_keys::Vector, hprm::Hyperprm, true_val::DataFrame; t_fixed::Bool=false, t_end::Float64=100.0, t_step::Float64=1.0, obs_late::Bool=false, t_obs::Float64=100.0)
     H = ForwardDiff.hessian(x -> compute_ll(x, prm_keys, hprm, true_val; t_fixed=t_fixed, t_end=t_end, t_step=t_step, obs_late=obs_late, t_obs=t_obs), eval_pt)
@@ -261,21 +291,8 @@ function compute_fi(eval_pt::Vector{Float64}, prm_keys::Vector, hprm::Hyperprm, 
 end
 
 """
-    function gen_all_fish_data(M_vals, noise_vals, m, w0, path; t_fixed::Bool=false, t_end::Float64=50.0, t_step::Float64=1.0)
-
-function that generates and stores all the fish data needed. On all a,n0,M,noise prm combinations specifed.
-
-# Arguments
-- `M_val::Vector{Int64}`: sample sizes
-- `noise_vals::Vector{Float64}`: noise levels
-- `m::Float64`: mortality rate in Klausmeier model (fixed)
-- `w0::Float64`: initial value for water compartment in Klausmeier model (fixed)
-- `path::String`: path to folder where fish data is stored
-- `t_fixed::Bool`: true if we consider a fixed observation time window
-- `t_end::Float64`: end of observation window (if t_fixed=true)
-- `t_step::Float64`: step size with which M observations should be picked (set if t_fixed=false)
+    function gen_all_fish_data_prm_plane(prm_keys::Vector, M_vals::Vector, noise_vals::Vector, path::String; a::Float64=1.3, m::Float64=0.45, n0::Float64=1.0, w0::Float64=1.0, t_fixed::Bool=false, t_end::Float64=100.0, t_step::Float64=1.0, obs_late::Bool=false, t_obs::Float64=100.0)
 """
-
 # brauch ich das? ggf noch erweitern auf 1D parameter
 function gen_all_fish_data_prm_plane(prm_keys::Vector, M_vals::Vector, noise_vals::Vector, path::String; a::Float64=1.3, m::Float64=0.45, n0::Float64=1.0, w0::Float64=1.0, t_fixed::Bool=false, t_end::Float64=100.0, t_step::Float64=1.0, obs_late::Bool=false, t_obs::Float64=100.0)
     for M in M_vals
@@ -328,7 +345,35 @@ function gen_all_fish_data_prm_plane(prm_keys::Vector, M_vals::Vector, noise_val
     end
 end
 
+"""
+    function gen_all_fish_data_an0_plane(prm_keys::Vector, M_vals::Vector, noise_vals::Vector, path::String;
+                                         m::Float64=0.45, w0::Float64=1.0, t_fixed::Bool=false, t_end::Float64=100.0, t_step::Float64=1.0, obs_late::Bool=false, t_obs::Float64=100.0, N::Int64=5)
 
+Generate and store Fisher Information data across a grid of `(a, n₀)` parameter values for different sample sizes and noise levels.  
+For each parameter combination, the Klausmeier model is simulated, the MLE is estimated via multiple restarts, and the Fisher Information is computed at the MLE.
+
+# Arguments
+    - `prm_keys::Vector`: Names of parameters to be estimated (e.g., `[:a, :m]`)
+    - `M_vals::Vector`: Sample sizes (number of observations per trajectory)
+    - `noise_vals::Vector`: Noise levels applied to simulated data
+    - `path::String`: Directory path where FI data will be stored
+    - `m::Float64=0.45`: Mortality rate in the Klausmeier model (fixed)
+    - `w0::Float64=1.0`: Initial water compartment value (fixed)
+    - `t_fixed::Bool=false`: If true, integrate over a fixed observation window `[0, t_end]`
+    - `t_end::Float64=100.0`: End time of observation window (if `t_fixed=true`)
+    - `t_step::Float64=1.0`: Step size between observations (if `t_fixed=false`)
+    - `obs_late::Bool=false`: If true, only consider late-time observations
+    - `t_obs::Float64=100.0`: Time at which late observations start (if `obs_late=true`)
+    - `N::Int64=5`: Number of optimization restarts used for MLE estimation
+
+# Behavior
+    - Loops over all combinations of `M_vals` and `noise_vals`
+    - Constructs a parameter grid in `(a, n₀)` space
+    - Simulates data with Gaussian noise for each grid point
+    - Computes the MLE using multiple-restart optimization
+    - Evaluates Fisher Information at the MLE
+    - Stores the resulting FI matrix as a CSV file via `store_fish_data`
+"""
 function gen_all_fish_data_an0_plane(prm_keys::Vector, M_vals::Vector, noise_vals::Vector, path::String; m::Float64=0.45, w0::Float64=1.0, t_fixed::Bool=false, t_end::Float64=100.0, t_step::Float64=1.0, obs_late::Bool=false, t_obs::Float64=100.0, N::Int64=5)
     for M in M_vals
         for noise in noise_vals

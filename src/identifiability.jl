@@ -2,7 +2,8 @@ export assess_practical_identifiability, analyze_ll
 
 # implements whole routine, experiment to be called by user
 """
-    function assess_practical_identifiability(prm_keys::Vector, hprm::Hyperprm; t_fixed::Bool=false, t_end::Float64=50.0, t_step::Float64=1.0, obs_late::Bool=false, t_obs::Float64=100.0, N::Int64=20)
+    function assess_practical_identifiability(prm_keys::Vector, hprm::Hyperprm;
+        t_fixed::Bool=false, t_end::Float64=50.0, t_step::Float64=1.0, obs_late::Bool=false, t_obs::Float64=100.0, N::Int64=20)
 
 Assess the practical identifiability of parameters in the Klausmeier model using multiple-restart MLE 
 and Fisher information approximations.
@@ -36,7 +37,8 @@ and Fisher information approximations.
     - `gaussian_heatmap`: Heatmap of the Gaussian (Fisher) approximation of parameter uncertainties
     - `gaussian_surface`: Surface plot of the Gaussian (Fisher) approximation of parameter uncertainties
  """       
-function assess_practical_identifiability(prm_keys::Vector, hprm::Hyperprm; t_fixed::Bool=false, t_end::Float64=100.0, t_step::Float64=1.0, obs_late::Bool=false, t_obs::Float64=100.0, N::Int64=20)
+function assess_practical_identifiability(prm_keys::Vector, hprm::Hyperprm;
+    t_fixed::Bool=false, t_end::Float64=100.0, t_step::Float64=1.0, obs_late::Bool=false, t_obs::Float64=100.0, N::Int64=20)
     
     # create data observations and include noise
     sol_true = sol_klausmeier(hprm; t_fixed=t_fixed, t_end=t_end, t_step=t_step, obs_late=obs_late, t_obs=t_obs)
@@ -65,6 +67,21 @@ function assess_practical_identifiability(prm_keys::Vector, hprm::Hyperprm; t_fi
     )
 end
 
+"""
+    function analyze_ll(mle::Vector, prm_keys::Vector, hprm_true::Hyperprm, cutoff::Int64; 
+                        t_fixed::Bool=false, t_end::Float64=100.0, t_step::Float64=1.0, 
+                        obs_late::Bool=false, t_obs::Float64=100.0)
+
+Generate and visualize the log-likelihood surface of the Klausmeier model around the true parameters.
+The function evaluates the log-likelihood over a parameter grid, applies a cutoff to filter low-probability regions,
+and produces a corresponding heatmap/ surface plot highlighting the MLE.
+
+# Arguments
+    - `mle::Vector`: Maximum likelihood estimate (MLE) of the parameters
+    - `prm_keys::Vector`: Names of the parameters for which the ll surface is evaluated
+    - `hprm_true::Hyperprm`: True underlying parameters used to simulate data
+    - `cutoff::Int64`: Minimum ll value retained for visualization; smaller values are masked
+"""
 function analyze_ll(mle::Vector, prm_keys::Vector, hprm_true::Hyperprm, cutoff::Int64; t_fixed::Bool=false, t_end::Float64=100.0, t_step::Float64=1.0, obs_late::Bool=false, t_obs::Float64=100.0)
     ll_data = gen_ll_evals(prm_keys, hprm_true, t_fixed=t_fixed, t_end=t_end, t_step=t_step, obs_late=obs_late, t_obs=t_obs)
     return plot_ll(ll_data, cutoff,mle, prm_keys)
@@ -73,7 +90,8 @@ end
 
 # all tools needed in practical identifiability analysis
 """
-    function correlation_covariance_matrix(eval_pt::Vector{Float64}, prm_keys::Vector, hprm::Hyperprm, true_val::DataFrame; t_fixed::Bool=false, t_end::Float64=50.0, t_step::Float64=1.0, obs_late::Bool=false, t_obs::Float64=100.0)
+    function correlation_covariance_matrix(eval_pt::Vector{Float64}, prm_keys::Vector, hprm::Hyperprm, true_val::DataFrame;
+        t_fixed::Bool=false, t_end::Float64=100.0, t_step::Float64=1.0, obs_late::Bool=false, t_obs::Float64=100.0)
 
 Compute the covariance and correlation matrices of the estimated parameters using the Fisher Information Matrix (FIM) approximation at a given evaluation point.
 We take the inverse of the Hessian of the negative log likelihood as approximation of the covariance matrix. The correlation matrix is obtained by normalization.
@@ -83,11 +101,6 @@ We take the inverse of the Hessian of the negative log likelihood as approximati
     - `prm_keys::Vector`: Names of the parameters corresponding to `eval_pt`
     - `hprm::Hyperprm`: Hyperparameters of the model (true underlying parameters)
     - `true_val::DataFrame`: Observed data used to compute the log-likelihood
-    - `t_fixed::Bool=false`: True if a fixed observation time window is considered
-    - `t_end::Float64=50.0`: End of the observation window (if t_fixed=true)
-    - `t_step::Float64=1.0`: Step size for observations (if t_fixed=false)
-    - `obs_late::Bool=false`: True if only late (stable state) observations are considered
-    - `t_obs::Float64=100.0`: Time at which late observations are taken if `obs_late=true`
 
 # Returns
     A tuple `(cor, cov)`:
@@ -102,7 +115,7 @@ function correlation_covariance_matrix(eval_pt::Vector{Float64}, prm_keys::Vecto
 end
 
 """
-    function plot_mult_restart_mles(inits::Matrix, mles::Matrix, ind_best::Int64, prm_keys::Vector; compare::Bool=true, N::Int64=20)
+    function plot_mult_restart_mles(inits::Matrix, mles::Matrix, ind_best::Int64, prm_keys::Vector, hprm::Hyperprm; compare::Bool=true, N::Int64=20)
 
 Plot the results of multiple-restart MLEs for given parameters, highlighting the best estimate, initial guesses, and optionally the true parameter values.
 

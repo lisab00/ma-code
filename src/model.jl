@@ -6,12 +6,12 @@ export Hyperprm, sol_klausmeier, randomize_data!
 All the parameters that can be set in the klausmeier model.
 
 # Fields:
-* `w0`: initial value for water compartment
-* `n0`: initialvalue for biomass compartment
-* `a`: water input model parameter
-* `m`: plant mortality parameter
-* `M`: sample size (number of measurements)
-* `noise`: noise level (Gaussian variance) of the data
+    - `w0`: initial value for water compartment
+    - `n0`: initialvalue for biomass compartment
+    - `a`: water input model parameter
+    - `m`: plant mortality parameter
+    - `M`: sample size (number of measurements)
+    - `noise`: noise level (Gaussian variance) of the data
 """
 abstract type AbstractHyperprm end
 
@@ -30,8 +30,8 @@ end
 define the klausmeier model equations.
 
 # Arguments
-- `du, u`: u[1], du[1] denote water compartment w. u[2], du[2] biomass compartment n
-- `p`: p[1] denotes a (water input parameter), p[2] m (plant mortality rate) parameter
+    - `du, u`: u[1], du[1] denote water compartment w. u[2], du[2] biomass compartment n
+    - `p`: p[1] denotes "a" (water input parameter), p[2] "m" (plant mortality rate) parameter
 """
 function klausmeier!(du,u,p,t)
     du[1] = -u[1] - u[1] * u[2]^2 + p[1] # water compartment
@@ -39,21 +39,24 @@ function klausmeier!(du,u,p,t)
 end
 
 """
-    function sol_klausmeier(hprm::Hyperprm; t_fixed::Bool=false, t_end::Float64=50.0, t_step::Float64=1.0, obs_late::Bool=false, t_obs::Float64=50.0)
+    function sol_klausmeier(hprm::Hyperprm; t_fixed::Bool=false, t_end::Float64=100.0, t_step::Float64=1.0, obs_late::Bool=false, t_obs::Float64=100.0)
 
 solve/ simulate the klausmeier model for given set of parameters and select number of observations samples M.
 Integration time window can either be fixed (to t_end) or variable.
 In the former case M denotes the sample density within fixed time window. In the latter case integration time ends after observing M samples of time distance t_step.
-Model is always solved with mesh size 0.1 and M samples are taken equidistantly.
+The model is always solved with mesh size 0.1 and M samples are taken equidistantly.
+Optionally, only late observations starting at `t_obs` can be returned by setting `obs_late=true`.
 
 # Arguments
-- `hprm::Hyperprm`: parameters for which the Klausmeier simulation is performed
-- `t_fixed::Bool`: true if we consider a fixed observation time window
-- `t_end::Float64`: end of observation window (set if t_fixed=true)
-- `t_step::Float64`: step size with which M observations should be picked (set if t_fixed=false)
+    - `hprm::Hyperprm`: parameters for which the Klausmeier simulation is performed
+    - `t_fixed::Bool`: true if we consider a fixed observation time window
+    - `t_end::Float64`: end of observation window (set if t_fixed=true)
+    - `t_step::Float64`: step size with which M observations should be picked (set if t_fixed=false)
+    - `obs_late::Bool=false`: If true, only return observations starting at time `t_obs`
+    - `t_obs::Float64=100.0`: Time at which late observations begin (used if `obs_late=true`)
 
 # Returns
-- `DataFrame`: columns "time", "w", "n" represent the simulated state of the compartment at given time step
+    - `DataFrame`: columns "time", "w", "n" represent the simulated state of the compartment at given time step
 """
 function sol_klausmeier(hprm::Hyperprm; t_fixed::Bool=false, t_end::Float64=100.0, t_step::Float64=1.0, obs_late::Bool=false, t_obs::Float64=100.0)
     u0 = [hprm.w0; hprm.n0]
@@ -92,11 +95,11 @@ end
 select M rows in equidistant steps from DataFrame.
 
 # Arguments
-- `df::DataFrame`: DataFrame from which rows are selected
-- `M::Real`: Number of rows to select
+    - `df::DataFrame`: DataFrame from which rows are selected
+    - `M::Real`: Number of rows to select
 
 # Returns
-- `DataFrame`: contains M rows=samples of ODE solution DataFrame
+    - `DataFrame`: contains M rows=samples of ODE solution DataFrame
 """
 function select_M_rows(df::DataFrame, M::Real)
     indices = round.(Int, range(1, nrow(df), length=M))
@@ -109,12 +112,12 @@ end
 start at t=0 and make time steps with length t_step until M_end. M_end=M*t_step such that we obtain M equidistand time steps.
 
 # Arguments
-- `df::DataFrame`: contain ODE solution with "time" column
-- `M_end::Float64`: end time point of ODE observation
-- `t_step::Float64`: step size of times at which we want to pick the observations
+    - `df::DataFrame`: contain ODE solution with "time" column
+    - `M_end::Float64`: end time point of ODE observation
+    - `t_step::Float64`: step size of times at which we want to pick the observations
 
 # Returns
-- `DataFrame`: contains M samples observed in time distances t_step
+    - `DataFrame`: contains M samples observed in time distances t_step
 """
 function step_M_times(df::DataFrame, M_end::Float64, t_step::Float64)
     time_pts = 0:t_step:M_end 

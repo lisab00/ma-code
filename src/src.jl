@@ -3,9 +3,10 @@ module Src
     using DifferentialEquations, CSV, DataFrames, Plots, Distributions, ForwardDiff, LinearAlgebra, Random, Optim, DataStructures, GlobalSensitivityAnalysis, Distributions
 
     # parameter combinations for whose data simulations the log-likelihood can be analysed.
-    a_vals = [0.1, 0.9, 1.1, 1.3, 1.7, 1.9, 0.8] 
-    n0_vals = [0.2, 0.4, 1.0, 1.3, 2.3]
+    #a_vals = [0.1, 0.9, 1.1, 1.3, 1.7, 1.9, 0.8] 
+    #n0_vals = [0.2, 0.4, 1.0, 1.3, 2.3]
 
+    # custom color gradient for plots
     tum_blues = ["#D7E4F4", "#C2D7EF", "#9ABCE4", "#5E94D4", "#165DB1", "#14519A", "#114584", "#0E396E"]
     tum_cgrad = cgrad(tum_blues)
 
