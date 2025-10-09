@@ -1,4 +1,4 @@
-export plot_ll_grid, plot_fisher_grid
+export plot_ll_grid, plot_fisher_grid, plot_ll
 
 """
     function plot_ll(evals_df::DataFrame, cutoff::Int64, mle::Vector, prm_keys::Vector)

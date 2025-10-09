@@ -1,4 +1,4 @@
-module src
+module Src
 
     using DifferentialEquations, CSV, DataFrames, Plots, Distributions, ForwardDiff, LinearAlgebra, Random, Optim, DataStructures, GlobalSensitivityAnalysis, Distributions
 
