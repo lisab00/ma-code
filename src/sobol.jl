@@ -52,7 +52,7 @@ end
 
 # Plots
 """
-    function sobol_index_subplot(sobol::Vector, comp::String; title::String="")
+    function sobol_index_subplot(sobol::Vector, comp::String; title::String="", M::Int64=1000)
 
 create plot of sobol indices for all parameters for one trajectory.
     
@@ -61,7 +61,7 @@ create plot of sobol indices for all parameters for one trajectory.
     - `comp::String`: compartment to which indices belong
     - `title::String`: optional subplot title
 """
-function sobol_index_subplot(sobol::Vector, comp::String; title::String="")
+function sobol_index_subplot(sobol::Vector, comp::String; title::String="", M::Int64=1000, t_fixed::Bool=true, t_end=100.0)
 
     #colors = [:blue, :turquoise, :orange, :red]
     colors = [
@@ -96,7 +96,7 @@ function sobol_index_subplot(sobol::Vector, comp::String; title::String="")
 end
 
 """
-    function sobol_index_subplot_wn(sobol_n::Vector, sobol_w::Vector; title::String="")
+    function sobol_index_subplot_wn(sobol_n::Vector, sobol_w::Vector; title::String="", M::Int64=1000)
 
 create plot of sobol indices for both trajectories underneath each other, for comparing.
     
@@ -105,13 +105,13 @@ create plot of sobol indices for both trajectories underneath each other, for co
     - `sobol_w::Vector`: output of compute_sobol_indices for w compartment
     - `title::String`: optional title
 """
-function sobol_index_subplot_wn(sobol_n::Vector, sobol_w::Vector; title::String="")
+function sobol_index_subplot_wn(sobol_n::Vector, sobol_w::Vector; title::String="", M::Int64=1000)
 
     # plot n compartment
-    plot_n = sobol_index_subplot(sobol_n, "n", title = title)
+    plot_n = sobol_index_subplot(sobol_n, "n", title = title, M=M)
 
     # plot w compartment
-    plot_w = sobol_index_subplot(sobol_w, "w")
+    plot_w = sobol_index_subplot(sobol_w, "w", M=M)
 
     # compare both
     return plot(plot_n, plot_w, layout=(2,1), size=(700,700))
