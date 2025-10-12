@@ -2,7 +2,7 @@ export forward_uq
 
 function forward_uq(mle::Vector, cov::Matrix, prm_keys::Vector, prm_true::Vector; t_pt_sample_dens::Int64=75,
     w0::Float64=1.0, n0::Float64=1.5, a::Float64=1.3, m::Float64=0.45, M::Int64=100, n::Int64=100
-    , t_fixed::Bool=true, t_end::Float64=100.0, t_step::Float64=1.0, obs_late::Bool=false, t_obs::Float64=100.0)
+    , t_fixed::Bool=false, t_end::Float64=100.0, t_step::Float64=1.0, obs_late::Bool=false, t_obs::Float64=100.0)
 
     # compute sample trajectories
     n_traj_sampled, w_traj_sampled = sample_am_traj(mle, cov, prm_keys, n)
