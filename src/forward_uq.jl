@@ -1,5 +1,33 @@
 export forward_uq
 
+"""
+    function forward_uq(mle::Vector, cov::Matrix, prm_keys::Vector, prm_true::Vector;
+        t_pt_sample_dens::Int64=75, w0::Float64=1.0, n0::Float64=1.5, a::Float64=1.3, 
+        m::Float64=0.45, M::Int64=100, n::Int64=100, t_fixed::Bool=false, 
+        t_end::Float64=100.0, t_step::Float64=1.0)
+
+Perform forward uncertainty quantification (UQ) using the Fisher approximation around the MLE.  
+Samples parameter combinations from the Gaussian approximation `N(mle, cov)` and propagates them through 
+the Klausmeier model to obtain probabilistic trajectories of the system states.
+
+Also compares sampled trajectories to the true (noise-free) solution and visualizes:
+- the probabilistic envelope of trajectories (`n` and `w`)
+- the sample distributions of state values at a given observation time point.
+
+# Arguments
+    - `mle::Vector`: estimated MLE vector for parameters (mean of sampling distribution)
+    - `cov::Matrix`: covariance matrix associated with MLE (used in Fisher approximation)
+    - `prm_keys::Vector`: symbols of the parameters that are varied in the UQ (e.g., `[:a, :m]`)
+    - `prm_true::Vector`: true underlying parameter values corresponding to `prm_keys`
+    - `t_pt_sample_dens::Int64`: index of the time point at which to compute sample density plots
+    - `n::Int64`: number of parameter samples to draw from the Fisher approximation
+
+# Returns
+    `NamedTuple` with fields:
+    - `trajectories`: plot of probabilistic solution trajectories for `n` and `w`
+    - `sample_dens_n`: plot of sampled density for `n` at `t_pt_sample_dens`
+    - `sample_dens_w`: plot of sampled density for `w` at `t_pt_sample_dens`
+"""
 function forward_uq(mle::Vector, cov::Matrix, prm_keys::Vector, prm_true::Vector; t_pt_sample_dens::Int64=75,
     w0::Float64=1.0, n0::Float64=1.5, a::Float64=1.3, m::Float64=0.45, M::Int64=100, n::Int64=100
     , t_fixed::Bool=false, t_end::Float64=100.0, t_step::Float64=1.0)
@@ -35,7 +63,39 @@ function forward_uq(mle::Vector, cov::Matrix, prm_keys::Vector, prm_true::Vector
     )
 end
 
-function sample_am_traj(mle::Vector, cov::Matrix, prm_keys::Vector, n::Int64; w0::Float64=1.0, n0::Float64=1.5, a::Float64=1.3, m::Float64=0.45, M::Int64=100, noise::Float64=0.0, t_fixed::Bool=true, t_end::Float64=100.0, t_step::Float64=1.0)
+"""
+    function sample_am_traj(mle::Vector, cov::Matrix, prm_keys::Vector, n::Int64;
+        w0::Float64=1.0, n0::Float64=1.5, a::Float64=1.3, m::Float64=0.45, 
+        M::Int64=100, noise::Float64=0.0, t_fixed::Bool=true, 
+        t_end::Float64=100.0, t_step::Float64=1.0)
+
+Generate sample trajectories of the Klausmeier model based on the Fisher (Gaussian) approximation 
+around the MLE. Samples `n` parameter combinations from the multivariate normal distribution 
+`N(mle, cov)` and propagates them through the model to produce probabilistic solution ensembles.
+
+# Arguments
+    - `mle::Vector`: mean (MLE) of the Gaussian sampling distribution
+    - `cov::Matrix`: covariance matrix (Fisher approximation of parameter uncertainty)
+    - `prm_keys::Vector`: symbols of the parameters that are varied (e.g., `[:a, :m]`)
+    - `n::Int64`: number of parameter samples to draw
+    - `w0::Float64`: initial water concentration (default: 1.0)
+    - `n0::Float64`: initial nutrient concentration (default: 1.5)
+    - `a::Float64`: growth rate parameter (default: 1.3)
+    - `m::Float64`: mortality rate parameter (default: 0.45)
+    - `M::Int64`: number of observation points in the simulation
+    - `noise::Float64`: noise level added to simulated data (default: 0.0)
+    - `t_fixed::Bool`: whether to simulate over a fixed time window (`true`) or variable (`false`)
+    - `t_end::Float64`: end of simulation time window (if `t_fixed=true`)
+    - `t_step::Float64`: time step between observations (if `t_fixed=false`)
+
+# Returns
+    `Tuple{Vector, Vector}`:
+    - `n_traj_sampled`: vector of sampled nutrient trajectories
+    - `w_traj_sampled`: vector of sampled water trajectories
+
+Each trajectory corresponds to one sampled parameter realization drawn from the Fisher approximation.
+"""
+function sample_am_traj(mle::Vector, cov::Matrix, prm_keys::Vector, n::Int64; w0::Float64=1.0, n0::Float64=1.5, a::Float64=1.3, m::Float64=0.45, M::Int64=100, t_fixed::Bool=true, t_end::Float64=100.0, t_step::Float64=1.0)
     # Fisher approximation
     if length(mle) == 1
         dist = Normal(mle[1], sqrt(cov[1]))
@@ -61,7 +121,7 @@ function sample_am_traj(mle::Vector, cov::Matrix, prm_keys::Vector, n::Int64; w0
         m_val  = get(prms, :m,  m)
 
         # Build hyperparameter object
-        hprm = Hyperprm(w0_val, n0_val, a_val, m_val, M, noise)
+        hprm = Hyperprm(w0_val, n0_val, a_val, m_val, M, 0.0)
 
         sol = sol_klausmeier(hprm, t_fixed=t_fixed, t_end=t_end,t_step=t_step) # leave out obs_late here because we want to simulate trajectory from beginning
         sol = randomize_data!(sol, hprm.noise)
