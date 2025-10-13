@@ -2,7 +2,7 @@ export forward_uq
 
 function forward_uq(mle::Vector, cov::Matrix, prm_keys::Vector, prm_true::Vector; t_pt_sample_dens::Int64=75,
     w0::Float64=1.0, n0::Float64=1.5, a::Float64=1.3, m::Float64=0.45, M::Int64=100, n::Int64=100
-    , t_fixed::Bool=false, t_end::Float64=100.0, t_step::Float64=1.0, obs_late::Bool=false, t_obs::Float64=100.0)
+    , t_fixed::Bool=false, t_end::Float64=100.0, t_step::Float64=1.0)
 
     # compute sample trajectories
     n_traj_sampled, w_traj_sampled = sample_am_traj(mle, cov, prm_keys, n)
@@ -15,7 +15,7 @@ function forward_uq(mle::Vector, cov::Matrix, prm_keys::Vector, prm_true::Vector
     m_val  = get(prms, :m,  m)
 
     hprm = Hyperprm(w0_val, n0_val, a_val, m_val, M, 0.0)
-    data_true = sol_klausmeier(hprm, t_fixed=t_fixed, t_end=t_end, t_step=t_step, obs_late=obs_late, t_obs=t_obs)
+    data_true = sol_klausmeier(hprm, t_fixed=t_fixed, t_end=t_end, t_step=t_step) # remove obs_late here because we want whole trajectory
     times = data_true[!,"time"]
 
     # plot probabilistic solution trajectories
@@ -35,7 +35,7 @@ function forward_uq(mle::Vector, cov::Matrix, prm_keys::Vector, prm_true::Vector
     )
 end
 
-function sample_am_traj(mle::Vector, cov::Matrix, prm_keys::Vector, n::Int64; w0::Float64=1.0, n0::Float64=1.5, a::Float64=1.3, m::Float64=0.45, M::Int64=100, noise::Float64=0.0, t_fixed::Bool=true, t_end::Float64=100.0, t_step::Float64=1.0, obs_late::Bool=false, t_obs::Float64=100.0)
+function sample_am_traj(mle::Vector, cov::Matrix, prm_keys::Vector, n::Int64; w0::Float64=1.0, n0::Float64=1.5, a::Float64=1.3, m::Float64=0.45, M::Int64=100, noise::Float64=0.0, t_fixed::Bool=true, t_end::Float64=100.0, t_step::Float64=1.0)
     # Fisher approximation
     if length(mle) == 1
         dist = Normal(mle[1], sqrt(cov[1]))
@@ -63,7 +63,7 @@ function sample_am_traj(mle::Vector, cov::Matrix, prm_keys::Vector, n::Int64; w0
         # Build hyperparameter object
         hprm = Hyperprm(w0_val, n0_val, a_val, m_val, M, noise)
 
-        sol = sol_klausmeier(hprm, t_fixed=t_fixed, t_end=t_end,t_step=t_step, obs_late=obs_late, t_obs=t_obs)
+        sol = sol_klausmeier(hprm, t_fixed=t_fixed, t_end=t_end,t_step=t_step) # leave out obs_late here because we want to simulate trajectory from beginning
         sol = randomize_data!(sol, hprm.noise)
         push!(n_traj_sampled, sol[!,"n"])
         push!(w_traj_sampled, sol[!,"w"])
