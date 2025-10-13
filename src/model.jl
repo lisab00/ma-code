@@ -1,4 +1,4 @@
-export Hyperprm, sol_klausmeier, randomize_data!
+export Hyperprm, sol_klausmeier, randomize_data!, bif_plot, bif_plot!
 
 """
     Hyperprm <: AbstractHyperprm
@@ -123,4 +123,133 @@ function step_M_times(df::DataFrame, M_end::Float64, t_step::Float64)
     time_pts = 0:t_step:M_end 
     df = filter(row -> row.time in time_pts, df)
     return df
+end
+
+
+### Bifurcation Plots
+"""
+    function bif_plot(m::Float64, comp::String; points=[])
+
+Plot the bifurcation diagram of the Klausmeier model for a given mortality rate `m`.  
+The bifurcation curves are computed for either the biomass (`n`) or water (`w`) steady-state 
+components as a function of the water input parameter `a`.
+
+# Arguments
+    - `m::Float64`: mortality rate parameter in the Klausmeier model
+    - `comp::String`: specifies which component to plot — `"n"` for biomass or `"w"` for water
+    - `points=[]`: optional list of `(a, value)` tuples to highlight specific points on the bifurcation diagram
+"""
+function bif_plot(m::Float64, comp::String; points=[])
+    a_vals = range(2*m, stop=2, length=400)
+    
+    if comp == "n"
+        plus = [n(a, m, true) for a in a_vals]
+        minus = [n(a, m, false) for a in a_vals]
+    else
+        plus = [w(a, m, true) for a in a_vals]
+        minus = [w(a, m, false) for a in a_vals]
+    end
+
+    # Plot the bifurcation curves
+    plot(a_vals, plus, color=:black, label="", lw=3, xlim=(0, maximum(a_vals)), ylim=(0, 2))
+    plot!(a_vals, minus, color=:black, linestyle=:dash, label="", lw=3)
+    
+    # Plot points if provided
+    for pt in points
+        scatter!([pt[1]], [pt[2]], color="#3070B3", marker=:x, markersize=8, markerstrokewidth=6, label="")
+    end
+
+    # Axes labels, title
+    xlabel!("water input a")
+    if comp == "n"
+        scatter!([2*m], [1], color=:black, marker=:circle, markersize=6, label="")
+        hline!([0], color=:black,  lw=5, linestyle=:solid, label="")
+        ylabel!("biomass n")
+    else
+        scatter!([2*m], [m], color=:black, marker=:circle, markersize=6, label="")
+        plot!(0:0.1:2, 0:0.1:2, color=:black,  lw=3, linestyle=:solid, label="")
+        ylabel!("water input w")
+    end
+    #title!("Bifurcation Diagram of Klausmeier Model\nm = $m")
+end
+
+"""
+    function bif_plot!(m::Float64, comp::String)
+
+adds bifurcation diagram to an existing plot (for documentation see bif_plot)
+"""
+function bif_plot!(m::Float64, comp::String)
+    a_vals = range(2*m, stop=2, length=400)
+    
+    if comp == "n"
+        plus = [n(a, m, true) for a in a_vals]
+        minus = [n(a, m, false) for a in a_vals]
+    else
+        plus = [w(a, m, true) for a in a_vals]
+        minus = [w(a, m, false) for a in a_vals]
+    end
+
+    # Plot the bifurcation curves
+    plot!(a_vals, plus, color=:black, label="", lw=3, xlim=(0, maximum(a_vals)), ylim=(0, 2))
+    plot!(a_vals, minus, color=:black, linestyle=:dash, label="", lw=3)
+    
+    # Axes labels, title
+    xlabel!("water input a")
+    if comp == "n"
+        scatter!([2*m], [1], color=:black, marker=:circle, markersize=6, label="")
+        hline!([0], color=:black,  lw=5, linestyle=:solid, label="")
+        ylabel!("biomass n")
+    else
+        scatter!([2*m], [m], color=:black, marker=:circle, markersize=6, label="")
+        plot!(0:0.1:2, 0:0.1:2, color=:black,  lw=3, linestyle=:solid, label="")
+        ylabel!("water w")
+    end
+    #title!("Bifurcation Diagram of Klausmeier Model\nm = $m")
+end
+
+
+# biomass equilibrium branches
+"""
+    n(a, m, plus::Bool)
+
+Compute the biomass equilibrium branch of the Klausmeier model.
+
+# Arguments
+    - `a::Float64`: water input parameter.
+    - `m::Float64`: mortality rate.
+    - `plus::Bool`: if `true`, return the upper (stable) branch; if `false`, return the lower (unstable) branch.
+
+# Returns
+    - `Float64`: equilibrium biomass value.
+"""
+function n(a, m, plus::Bool)
+    sqrt_term = sqrt(a^2 - 4*m^2)
+    if plus
+        return (a + sqrt_term) / (2*m)
+    else
+        return (a - sqrt_term) / (2*m)
+    end
+end
+
+# water equilibrium branches
+"""
+    w(a, m, plus::Bool)
+
+Compute the water equilibrium branch of the Klausmeier model.
+
+# Arguments
+    - `a::Float64`: water input parameter.
+    - `m::Float64`: mortality rate.
+    - `plus::Bool`: if `true`, return the upper (stable) branch; if `false`, return the lower (unstable) branch.
+
+# Returns
+    - `Float64`: equilibrium water value.
+"""
+function w(a, m, plus::Bool)
+    sqrt_term = sqrt(a^2 - 4*m^2)
+    if plus
+        return (2*m^2) / (a + sqrt_term)
+    else
+        return (2*m^2) / (a - sqrt_term)
+    end
 end
