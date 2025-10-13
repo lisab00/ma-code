@@ -11,7 +11,7 @@ Plot of log-likelihood evaluations highlighting the MLE.
     - `mle::Vector`: Maximum likelihood estimate of the parameters (used to mark the best estimate)
     - `prm_keys::Vector`: Names of the inferred parameters
 """
-function plot_ll(evals_df::DataFrame, cutoff::Int64, mle::Vector, prm_keys::Vector)
+function plot_ll(evals_df::DataFrame, cutoff::Int64, point::Vector, prm_keys::Vector; grid_plot::Bool=false)
 
     if length(prm_keys)==2
 
@@ -24,13 +24,17 @@ function plot_ll(evals_df::DataFrame, cutoff::Int64, mle::Vector, prm_keys::Vect
 
         p = heatmap(rx, ry, evals_cutoff, alpha=0.9, xlabel=prm_keys[1], ylabel=prm_keys[2], title="Log-Likelihood", color=tum_cgrad, colorbar=false)
         contour!(rx, ry, evals_cutoff, linewidth=1, color=tum_cgrad, levels=300, label=false)
-        scatter!([mle[1]],[mle[2]], markershape=:x, markerstrokewidth=3, markersize=6, color="#F7811E", label="MLE")
+        if grid_plot
+            scatter!([point[1]],[point[2]], markershape=:x, markerstrokewidth=2, markersize=4, color="#F7811E", label="true")
+        else
+            scatter!([point[1]],[point[2]], markershape=:x, markerstrokewidth=3, markersize=6, color="#F7811E", label="MLE")
+        end
     else
         rx = 0.0:0.01:2.0
         evals = evals_df[:,1]
         evals_cutoff = map(z -> z < cutoff ? NaN : z, evals)
         p = plot(rx, evals_cutoff, linewidth=2, color="#3070B3", xlabel=prm_keys[1], ylabel="", label="", title="Log-Likelihood")
-        vline!([mle[1]], color="#F7811E", label="MLE", linestyle=:dash, linewidth=2)
+        vline!([point[1]], color="#F7811E", label="MLE", linestyle=:dash, linewidth=2)
     end
     return p
 end
@@ -50,7 +54,7 @@ Create a 3×3 grid of log-likelihood heatmaps for different noise and M values.
     - `lower_bound`: cutoff below which ll values are truncated
     - `path_to_read`: path to folder where CSVs are stored
 """
-function plot_ll_grid(point::Vector, prm_keys::Vector, noise_vals::Vector, M_vals::Vector, cutoff::Int64, path_to_read::String; a::Float64=1.3, m::Float64=0.45, n0::Float64=1.0, w0::Float64=1.0)
+function plot_ll_grid(point::Vector, prm_keys::Vector, noise_vals::Vector, M_vals::Vector, cutoff::Int64, path_to_read::String; a::Float64=1.3, m::Float64=0.45, n0::Float64=1.0, w0::Float64=1.0, grid_plot::Bool=false)
 
     plots_matrix = Array{Any}(undef, 3, 3)
 
@@ -63,7 +67,7 @@ function plot_ll_grid(point::Vector, prm_keys::Vector, noise_vals::Vector, M_val
     for i in 1:3  # noise increases top→bottom
         for j in 1:3  # M decreases left→right
             ll = read_ll_file(w0_val, n0_val, a_val, m_val, M_vals[j], noise_vals[i], path_to_read)
-            p = plot_ll(ll, cutoff, point, prm_keys)
+            p = plot_ll(ll, cutoff, point, prm_keys, grid_plot=grid_plot)
             plots_matrix[i, j] = p
         end
     end
