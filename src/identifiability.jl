@@ -132,7 +132,7 @@ function plot_mult_restart_mles(inits::Matrix, mles::Matrix, ind_best::Int64, pr
     n_prms = length(prm_keys)
     
     if n_prms == 1
-        p = plot(mles[:,1], label="MLEs $(prm_keys[1])", title="Multiple restart MLE of $(prm_keys[1])",color="#165DB1",linewidth=2, ylabel="parameter value", xlabel="restart index")
+        p = plot(mles[:,1], label="MLEs $(prm_keys[1])", title="Multiple restart MLE of $(prm_keys[1])",color="#165DB1",linewidth=2, ylabel="", xlabel="restart index")
         if hprm !== nothing && hasproperty(hprm, prm_keys[1])
             hline!([getproperty(hprm, prm_keys[1])], linestyle=:dash, linewidth=2, color=:black, label="true parameter")
         end
@@ -145,7 +145,7 @@ function plot_mult_restart_mles(inits::Matrix, mles::Matrix, ind_best::Int64, pr
         return p
     else
         # subplot 1
-        p1 = plot(mles[:,1], label="MLEs $(prm_keys[1])", title="Multiple restart MLE of $(prm_keys[1])",color="#165DB1",linewidth=2, ylabel="parameter value", xlabel="restart index")
+        p1 = plot(mles[:,1], label="MLEs $(prm_keys[1])", title="Multiple restart MLE of $(prm_keys[1])",color="#165DB1",linewidth=2, ylabel="", xlabel="restart index")
         if hprm !== nothing && hasproperty(hprm, prm_keys[1])
             hline!([getproperty(hprm, prm_keys[1])], linestyle=:dash, linewidth=2, color=:black, label="true parameter")
         end
@@ -157,7 +157,7 @@ function plot_mult_restart_mles(inits::Matrix, mles::Matrix, ind_best::Int64, pr
         scatter!([ind_best], [mles[ind_best, 1]], markershape=:x, markerstrokewidth=5, markersize=8, color="#F7811E", label="best estimate")
         
         # subplot 2
-        p2 = plot(mles[:,2], label="MLEs $(prm_keys[2])", title="Multiple restart MLE of $(prm_keys[2])",color="#165DB1",linewidth=2, ylabel="parameter value", xlabel="restart index")
+        p2 = plot(mles[:,2], label="MLEs $(prm_keys[2])", title="Multiple restart MLE of $(prm_keys[2])",color="#165DB1",linewidth=2, ylabel="", xlabel="restart index")
         if hprm !== nothing && hasproperty(hprm, prm_keys[2])
             hline!([getproperty(hprm, prm_keys[2])], linestyle=:dash, linewidth=2, color=:black, label="true parameter")
         end

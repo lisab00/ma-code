@@ -33,7 +33,7 @@ function forward_uq(mle::Vector, cov::Matrix, prm_keys::Vector, prm_true::Vector
     , t_fixed::Bool=false, t_end::Float64=100.0, t_step::Float64=1.0)
 
     # compute sample trajectories
-    n_traj_sampled, w_traj_sampled = sample_am_traj(mle, cov, prm_keys, n)
+    n_traj_sampled, w_traj_sampled = sample_am_traj(mle, cov, prm_keys, n, w0=w0, n0=n0, a=a, m=m, M=M, t_fixed=t_fixed, t_end=t_end, t_step=t_step)
 
     # generate true data simulations
     prms = Dict(zip(prm_keys, prm_true))
@@ -65,9 +65,8 @@ end
 
 """
     function sample_am_traj(mle::Vector, cov::Matrix, prm_keys::Vector, n::Int64;
-        w0::Float64=1.0, n0::Float64=1.5, a::Float64=1.3, m::Float64=0.45, 
-        M::Int64=100, noise::Float64=0.0, t_fixed::Bool=true, 
-        t_end::Float64=100.0, t_step::Float64=1.0)
+        w0::Float64=1.0, n0::Float64=1.5, a::Float64=1.3, m::Float64=0.45, M::Int64=100,
+        t_fixed::Bool=true, t_end::Float64=100.0, t_step::Float64=1.0)
 
 Generate sample trajectories of the Klausmeier model based on the Fisher (Gaussian) approximation 
 around the MLE. Samples `n` parameter combinations from the multivariate normal distribution 
