@@ -123,7 +123,6 @@ function sample_am_traj(mle::Vector, cov::Matrix, prm_keys::Vector, n::Int64; w0
         hprm = Hyperprm(w0_val, n0_val, a_val, m_val, M, 0.0)
 
         sol = sol_klausmeier(hprm, t_fixed=t_fixed, t_end=t_end,t_step=t_step) # leave out obs_late here because we want to simulate trajectory from beginning
-        sol = randomize_data!(sol, hprm.noise)
         push!(n_traj_sampled, sol[!,"n"])
         push!(w_traj_sampled, sol[!,"w"])
     end
