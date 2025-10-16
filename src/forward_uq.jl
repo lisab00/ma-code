@@ -146,11 +146,11 @@ function plot_prob_traj(times::Vector{Float64}, n_traj_sampled::Vector{Any}, w_t
 
     n = length(n_traj_sampled)
 
-    plot_traj = plot(times, n_mean, label="mean n", lw=2, color="#3070B3", legend=:bottomright, title="")
-    plot!(times, w_mean, label="mean w", lw=2, color="#F7811E")
+    plot_traj = plot(times, n_mean, label="mean n", lw=2, color="#F7811E", legend=:bottomright, title="")
+    plot!(times, w_mean, label="mean w", lw=2, color="#3070B3")
     for i in range(1, n)
-        plot!(times,n_traj_sampled[i], color="#3070B3", alpha=0.05, label="")
-        plot!(times,w_traj_sampled[i], color="#F7811E", alpha=0.05,label="")
+        plot!(times,n_traj_sampled[i], color="#F7811E", alpha=0.05, label="")
+        plot!(times,w_traj_sampled[i], color="#3070B3", alpha=0.05,label="")
     end
     plot!(times, data_true[!,"n"], lw=2, color=:black, label="",linestyle=:dash)
     plot!(times, data_true[!,"w"], lw=2, color=:black, label="", linestyle=:dash)
