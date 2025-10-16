@@ -156,7 +156,9 @@ function compute_ll(x::Vector, prm_keys::Vector, hprm::Hyperprm, true_val::DataF
     w0     = get(prms, :w0, hprm.w0)
 
     hprm = Hyperprm(w0, n0, a, m, hprm.M, hprm.noise)
-    pred_val = sol_klausmeier(hprm; t_fixed=t_fixed, t_end=t_end, t_step=t_step, obs_late=obs_late, t_obs=t_obs)
+    pred_val = sol_klausmeier(hprm; t_fixed=t_fixed, t_end=t_end, t_step=t_step, obs_late=obs_late, t_obs=t_obs) # this is not noisy!
+    
+    # assume noisy of true data to be known
     if hprm.noise == 0.0
         ll = -0.5 * sum((true_val[:,"n"] - pred_val[:,"n"]) .^2) - 0.5 * sum((true_val[:,"w"] - pred_val[:,"w"]) .^2) # add up ll for both trajectories
     else
