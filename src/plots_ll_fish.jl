@@ -11,7 +11,7 @@ Plot of log-likelihood evaluations highlighting the MLE.
     - `mle::Vector`: Maximum likelihood estimate of the parameters (used to mark the best estimate)
     - `prm_keys::Vector`: Names of the inferred parameters
 """
-function plot_ll(evals_df::DataFrame, cutoff::Int64, point::Vector, prm_keys::Vector; grid_plot::Bool=false)
+function plot_ll(evals_df::DataFrame, cutoff::Int64, point::Vector, prm_keys::Vector; grid_plot::Bool=false, levels::Int64=300)
 
     if length(prm_keys)==2
 
@@ -23,7 +23,7 @@ function plot_ll(evals_df::DataFrame, cutoff::Int64, point::Vector, prm_keys::Ve
         evals_cutoff = map(z -> z < cutoff ? NaN : z, evals)
 
         p = heatmap(rx, ry, evals_cutoff, alpha=0.9, xlabel=prm_keys[1], ylabel=prm_keys[2], title="Log-Likelihood", color=tum_cgrad, colorbar=false)
-        contour!(rx, ry, evals_cutoff, linewidth=1, color=tum_cgrad, levels=300, label=false)
+        contour!(rx, ry, evals_cutoff, linewidth=1, color=tum_cgrad, levels=levels, label=false)
         if grid_plot
             scatter!([point[1]],[point[2]], markershape=:x, markerstrokewidth=2, markersize=4, color="#F7811E", label="true")
         else
