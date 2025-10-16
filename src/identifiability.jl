@@ -82,9 +82,9 @@ and produces a corresponding heatmap/ surface plot highlighting the MLE.
     - `hprm_true::Hyperprm`: True underlying parameters used to simulate data
     - `cutoff::Int64`: Minimum ll value retained for visualization; smaller values are masked
 """
-function analyze_ll(mle::Vector, prm_keys::Vector, hprm_true::Hyperprm, cutoff::Int64; t_fixed::Bool=false, t_end::Float64=100.0, t_step::Float64=1.0, obs_late::Bool=false, t_obs::Float64=100.0)
+function analyze_ll(mle::Vector, prm_keys::Vector, hprm_true::Hyperprm, cutoff::Int64; t_fixed::Bool=false, t_end::Float64=100.0, t_step::Float64=1.0, obs_late::Bool=false, t_obs::Float64=100.0, levels::Int64=300)
     ll_data = gen_ll_evals(prm_keys, hprm_true, t_fixed=t_fixed, t_end=t_end, t_step=t_step, obs_late=obs_late, t_obs=t_obs)
-    return plot_ll(ll_data, cutoff,mle, prm_keys)
+    return plot_ll(ll_data, cutoff,mle, prm_keys,levels=levels)
 end
 
 
