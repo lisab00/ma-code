@@ -28,21 +28,19 @@ Also compares sampled trajectories to the true (noise-free) solution and visuali
     - `sample_dens_n`: plot of sampled density for `n` at `t_pt_sample_dens`
     - `sample_dens_w`: plot of sampled density for `w` at `t_pt_sample_dens`
 """
-function forward_uq(mle::Vector, cov::Matrix, prm_keys::Vector, prm_true::Vector; t_pt_sample_dens::Int64=75,
-    w0::Float64=1.0, n0::Float64=1.5, a::Float64=1.3, m::Float64=0.45, M::Int64=100, n::Int64=100
-    , t_fixed::Bool=false, t_end::Float64=100.0, t_step::Float64=1.0)
+function forward_uq(mle::Vector, cov::Matrix, prm_keys::Vector, prm_true::Vector, hprm::Hyperprm; t_pt_sample_dens::Int64=75, n::Int64=100, t_fixed::Bool=false, t_end::Float64=100.0, t_step::Float64=1.0)
 
     # compute sample trajectories
-    n_traj_sampled, w_traj_sampled = sample_am_traj(mle, cov, prm_keys, n, w0=w0, n0=n0, a=a, m=m, M=M, t_fixed=t_fixed, t_end=t_end, t_step=t_step)
+    n_traj_sampled, w_traj_sampled = sample_am_traj(mle, cov, prm_keys, hprm, n, t_fixed=t_fixed, t_end=t_end, t_step=t_step)
 
     # generate true data simulations
     prms = Dict(zip(prm_keys, prm_true))
-    w0_val = get(prms, :w0, w0)
-    n0_val = get(prms, :n0, n0)
-    a_val  = get(prms, :a,  a)
-    m_val  = get(prms, :m,  m)
+    w0_val = get(prms, :w0, hprm.w0)
+    n0_val = get(prms, :n0, hprm.n0)
+    a_val  = get(prms, :a,  hprm.a)
+    m_val  = get(prms, :m,  hprm.m)
 
-    hprm = Hyperprm(w0_val, n0_val, a_val, m_val, M, 0.0)
+    hprm = Hyperprm(w0_val, n0_val, a_val, m_val, hprm.M, 0.0)
     data_true = sol_klausmeier(hprm, t_fixed=t_fixed, t_end=t_end, t_step=t_step) # remove obs_late here because we want whole trajectory
     times = data_true[!,"time"]
 
@@ -94,7 +92,7 @@ around the MLE. Samples `n` parameter combinations from the multivariate normal 
 
 Each trajectory corresponds to one sampled parameter realization drawn from the Fisher approximation.
 """
-function sample_am_traj(mle::Vector, cov::Matrix, prm_keys::Vector, n::Int64; w0::Float64=1.0, n0::Float64=1.5, a::Float64=1.3, m::Float64=0.45, M::Int64=100, t_fixed::Bool=true, t_end::Float64=100.0, t_step::Float64=1.0)
+function sample_am_traj(mle::Vector, cov::Matrix, prm_keys::Vector, hprm::Hyperprm, n::Int64; t_fixed::Bool=true, t_end::Float64=100.0, t_step::Float64=1.0)
     # Fisher approximation
     if length(mle) == 1
         dist = Normal(mle[1], sqrt(cov[1]))
@@ -114,13 +112,13 @@ function sample_am_traj(mle::Vector, cov::Matrix, prm_keys::Vector, n::Int64; w0
         s = samples[:,i]
 
         prms = Dict(zip(prm_keys, s))
-        w0_val = get(prms, :w0, w0)
-        n0_val = get(prms, :n0, n0)
-        a_val  = get(prms, :a,  a)
-        m_val  = get(prms, :m,  m)
+        w0_val = get(prms, :w0, hprm.w0)
+        n0_val = get(prms, :n0, hprm.n0)
+        a_val  = get(prms, :a,  hprm.a)
+        m_val  = get(prms, :m,  hprm.m)
 
         # Build hyperparameter object
-        hprm = Hyperprm(w0_val, n0_val, a_val, m_val, M, 0.0)
+        hprm = Hyperprm(w0_val, n0_val, a_val, m_val, hprm.M, 0.0)
 
         sol = sol_klausmeier(hprm, t_fixed=t_fixed, t_end=t_end,t_step=t_step) # leave out obs_late here because we want to simulate trajectory from beginning
         push!(n_traj_sampled, sol[!,"n"])
