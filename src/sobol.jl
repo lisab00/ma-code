@@ -43,18 +43,7 @@ function compute_sobol_indices(N::Int64, dens_a::Distribution, dens_m::Distribut
     end
 
     # compute sobol indices
-    sobol_n = Vector{Any}(undef, M)
-
-    # avoid numerical issues when variance becomes too small (< 10e-10)
-    for j in 1:M
-        v = var(n[:,j])
-        if v < 1e-10
-            sobol_n[j] = Dict(:firstorder => zeros(4), :totalorder => zeros(4))
-        else
-            sobol_n[j] = analyze(data, n[:,j])
-        end
-    end
-
+    sobol_n = [analyze(data, n[:,j]) for j in 1:M]
     sobol_w = [analyze(data, w[:,j]) for j in 1:M]
 
     return sobol_n, sobol_w
