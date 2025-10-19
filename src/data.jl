@@ -393,7 +393,7 @@ function gen_all_fish_data_an0_plane(prm_keys::Vector, M_vals::Vector, noise_val
                     eval_pt_counter = eval_pt_counter + 1 # total number of optimizations
 
                     pt = grid[i,j] # true observation parameter point combination of a, n0
-                    hprm = Src.Hyperprm(w0, pt[2], pt[1], m, M, noise) # w0,n0,a,m,M
+                    hprm = Hyperprm(w0, pt[2], pt[1], m, M, noise) # w0,n0,a,m,M
 
                     sol_true = sol_klausmeier(hprm; t_fixed=t_fixed, t_end=t_end, t_step=t_step, obs_late=obs_late, t_obs=t_obs)
                     sol_true = randomize_data!(sol_true, hprm.noise) # include noise
