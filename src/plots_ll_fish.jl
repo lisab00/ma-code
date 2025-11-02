@@ -22,7 +22,7 @@ function plot_ll(evals_df::DataFrame, cutoff::Int64, point::Vector, prm_keys::Ve
 
         evals_cutoff = map(z -> z < cutoff ? NaN : z, evals)
 
-        p = heatmap(rx, ry, evals_cutoff, alpha=0.9, xlabel=prm_keys[1], ylabel=prm_keys[2], title="Log-Likelihood", color=tum_cgrad, colorbar=false)
+        p = heatmap(rx, ry, evals_cutoff, alpha=0.9, xlabel=prm_keys[1], ylabel=prm_keys[2], title="", color=tum_cgrad, colorbar=true)
         contour!(rx, ry, evals_cutoff, linewidth=1, color=tum_cgrad, levels=levels, label=false)
         if grid_plot
             scatter!([point[1]],[point[2]], markershape=:x, markerstrokewidth=2, markersize=4, color="#F7811E", label="true")

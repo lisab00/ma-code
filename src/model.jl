@@ -151,8 +151,8 @@ function bif_plot(m::Float64, comp::String; points=[])
     end
 
     # Plot the bifurcation curves
-    plot(a_vals, plus, color=:black, label="", lw=3, xlim=(0, maximum(a_vals)), ylim=(0, 2))
-    plot!(a_vals, minus, color=:black, linestyle=:dash, label="", lw=3)
+    plot(a_vals, plus, color="#3070B3", label="", lw=3, xlim=(0, maximum(a_vals)), ylim=(0, 2))
+    plot!(a_vals, minus, color="#3070B3", linestyle=:dash, label="", lw=3)
     
     # Plot points if provided
     for pt in points
@@ -160,15 +160,15 @@ function bif_plot(m::Float64, comp::String; points=[])
     end
 
     # Axes labels, title
-    xlabel!("water input a")
+    xlabel!(L"water input $a$")
     if comp == "n"
-        scatter!([2*m], [1], color=:black, marker=:circle, markersize=6, label="")
-        hline!([0], color=:black,  lw=5, linestyle=:solid, label="")
-        ylabel!("biomass n")
+        scatter!([2*m], [1], color="#3070B3", marker=:circle, markersize=6, markerstrokewidth=0, label="")
+        hline!([0], color="#3070B3",  lw=5, linestyle=:solid, label="")
+        ylabel!(L"biomass $n$")
     else
-        scatter!([2*m], [m], color=:black, marker=:circle, markersize=6, label="")
-        plot!(0:0.1:2, 0:0.1:2, color=:black,  lw=3, linestyle=:solid, label="")
-        ylabel!("water input w")
+        scatter!([2*m], [m], color="#3070B3", marker=:circle, markersize=6, markerstrokewidth=0, label="")
+        plot!(0:0.1:2, 0:0.1:2, color="#3070B3",  lw=3, linestyle=:solid, label="")
+        ylabel!(L"water $w$")
     end
     #title!("Bifurcation Diagram of Klausmeier Model\nm = $m")
 end

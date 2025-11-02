@@ -169,7 +169,7 @@ Plots the sample density of the trajectories at specified time point. Vertical l
 function plot_sample_dens_t(t_pt_sample_dens::Int64, traj_sampled::Vector{Any}, traj_t_true::Float64, traj_name::String)
     traj_t_sam = [s[t_pt_sample_dens] for s in traj_sampled]
     traj_t_dens = kde(traj_t_sam)
-    plot_dens = plot(traj_t_dens.x, traj_t_dens.density, color="#3070B3", lw=2, ylabel="sampled pdf", label="$traj_name", title="")
+    plot_dens = plot(traj_t_dens.x, traj_t_dens.density, color="#3070B3", lw=2, ylabel="sample density", label="$traj_name", title="")
     vline!([traj_t_true], color=:black, linestyle=:dash, label="true value")
     return plot_dens
 end

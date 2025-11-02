@@ -167,7 +167,7 @@ function plot_mult_restart_mles(inits::Matrix, mles::Matrix, ind_best::Int64, pr
             scatter!(1:N, inits[:,2], markershape=:square, markersize=2, color="#9ABCE4", label="")
         end
         scatter!([ind_best], [mles[ind_best, 2]], markershape=:x, markerstrokewidth=5, markersize=8, color="#F7811E", label="best estimate")
-        return plot(p1, p2, layout=(1,2), size=(800,400))
+        return plot(p1, p2, layout=(1,2), size=(800,400), bottom_margin=5mm)
     end
 end
 
