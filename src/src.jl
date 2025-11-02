@@ -1,7 +1,7 @@
 module Src
 
     using DifferentialEquations, ForwardDiff, Optim, GlobalSensitivityAnalysis 
-    using CSV, DataFrames, Plots, DataStructures, LinearAlgebra
+    using CSV, DataFrames, Plots, DataStructures, LinearAlgebra, LaTeXStrings, Plots.Measures
     using Random, Distributions, KernelDensity
     
     # parameter combinations for whose data simulations the log-likelihood can be analysed.
