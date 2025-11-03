@@ -241,7 +241,7 @@ function plot_gaussian(mle::Vector, cov::Matrix, prm_keys::Vector)
 
         # create 3D plots from different viewpoints
         v1 = plot(a, m, pdf_evals, st=:surface, xlabel=prm_keys[1], ylabel=prm_keys[2], color=tum_cgrad, colorbar=false)
-        v2 = plot(m, a, pdf_evals', st=:surface, xlabel=prm_keys[1], ylabel=prm_keys[2], color=tum_cgrad, colorbar=false)
+        v2 = plot(m, a, pdf_evals', st=:surface, xlabel=prm_keys[2], ylabel=prm_keys[1], color=tum_cgrad, colorbar=false)
         surface_plot = plot(v1,v2, layout=(1,2), size=(800,400))
     end
 
