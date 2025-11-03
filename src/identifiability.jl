@@ -185,7 +185,7 @@ Plot the evolution of the loss values across multiple-restart MLEs, highlighting
     - `N::Int64=20`: Number of restarts
 """
 function plot_mult_restart_losses(inits_loss::Vector, losses::Vector, ind_best::Int64; compare::Bool=false, N::Int64=20)
-    plot(losses, label="MLEs", color="#165DB1",linewidth=2, title="Loss evolution of multiple restart MLE", ylabel = "loss value", xlabel="restart index")
+    plot(losses, label="MLEs", color="#165DB1",linewidth=2, title="", ylabel = "loss value", xlabel="restart index")
     scatter!(1:N, losses, markershape=:square, markersize=2, color="#165DB1", label="")
 
     if compare
