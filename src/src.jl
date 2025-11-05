@@ -9,7 +9,7 @@ module Src
     #n0_vals = [0.2, 0.4, 1.0, 1.3, 2.3]
 
     # custom color gradient for plots
-    tum_blues = ["#D7E4F4", "#C2D7EF", "#9ABCE4", "#5E94D4", "#165DB1", "#14519A", "#114584", "#0E396E"]
+    tum_blues = ["#C2D7EF", "#9ABCE4", "#5E94D4", "#165DB1"]
     tum_cgrad = cgrad(tum_blues)
 
 

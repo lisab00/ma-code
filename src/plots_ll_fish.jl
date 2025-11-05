@@ -22,10 +22,13 @@ function plot_ll(evals_df::DataFrame, cutoff::Int64, point::Vector, prm_keys::Ve
 
         evals_cutoff = map(z -> z < cutoff ? NaN : z, evals)
 
-        p = heatmap(rx, ry, evals_cutoff, alpha=0.9, xlabel=prm_keys[1], ylabel=prm_keys[2], title="", color=tum_cgrad, colorbar=false)
-        contour!(rx, ry, evals_cutoff, linewidth=1, color=tum_cgrad, levels=levels, label=false)
+        p = heatmap(rx, ry, evals_cutoff, alpha=0.9, xlabel=prm_keys[1], ylabel=prm_keys[2], title="", 
+            #color=reverse(tum_cgrad),
+            color=tum_cgrad,
+            colorbar=false, xticks = [0.0, 1.0, 2.0], yticks = [1.0, 2.0])
+        contour!(rx, ry, evals_cutoff, linewidth=1, linecolor=:black, levels=levels, label=false)
         if grid_plot
-            scatter!([point[1]],[point[2]], markershape=:x, markerstrokewidth=2, markersize=4, color="#F7811E", label="true")
+            scatter!([point[1]],[point[2]], markershape=:x, markerstrokewidth=1, markersize=2, color="#F7811E", label="")
         else
             scatter!([point[1]],[point[2]], markershape=:x, markerstrokewidth=3, markersize=6, color="#F7811E", label="MLE")
         end
@@ -54,7 +57,7 @@ Create a 3×3 grid of log-likelihood heatmaps for different noise and M values.
     - `lower_bound`: cutoff below which ll values are truncated
     - `path_to_read`: path to folder where CSVs are stored
 """
-function plot_ll_grid(point::Vector, prm_keys::Vector, noise_vals::Vector, M_vals::Vector, cutoff::Int64, path_to_read::String; a::Float64=1.3, m::Float64=0.45, n0::Float64=1.0, w0::Float64=1.0, grid_plot::Bool=false)
+function plot_ll_grid(point::Vector, prm_keys::Vector, noise_vals::Vector, M_vals::Vector, cutoff::Int64, path_to_read::String; a::Float64=1.3, m::Float64=0.45, n0::Float64=1.0, w0::Float64=1.0, grid_plot::Bool=false, levels=levels)
 
     plots_matrix = Array{Any}(undef, 3, 3)
 
@@ -67,7 +70,7 @@ function plot_ll_grid(point::Vector, prm_keys::Vector, noise_vals::Vector, M_val
     for i in 1:3  # noise increases top→bottom
         for j in 1:3  # M decreases left→right
             ll = read_ll_file(w0_val, n0_val, a_val, m_val, M_vals[j], noise_vals[i], path_to_read)
-            p = plot_ll(ll, cutoff, point, prm_keys, grid_plot=grid_plot)
+            p = plot_ll(ll, cutoff, point, prm_keys, grid_plot=grid_plot, levels=levels)
             plots_matrix[i, j] = p
         end
     end
@@ -133,7 +136,8 @@ function plot_fisher_an0_plane(evals_df::DataFrame; logscale::Bool=true)
 
     evals = map(z -> (logscale && z > 0) ? log(z) : ((logscale && z <= 0) ? NaN : z), evals)
 
-    p = heatmap(rx, ry, evals, alpha=0.9, xlabel="a", ylabel="n0", title="Fisher Information", color=tum_cgrad, colorbar=false)
+    p = heatmap(rx, ry, evals, alpha=0.9, xlabel="a", ylabel="n0", title="Fisher Information", 
+        color=tum_cgrad, colorbar=false, xticks = [0.0, 1.0, 2.0], yticks = [1.0, 2.0])
     contour!(rx, ry, evals, linewidth=1, color=tum_cgrad, levels=300, label=false)
     return p
 end
