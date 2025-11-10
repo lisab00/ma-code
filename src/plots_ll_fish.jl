@@ -136,6 +136,9 @@ function plot_fisher_an0_plane(evals_df::DataFrame; logscale::Bool=true)
 
     evals = map(z -> (logscale && z > 0) ? log(z) : ((logscale && z <= 0) ? NaN : z), evals)
 
+    tum_blues = ["#D7E4F4", "#C2D7EF", "#9ABCE4", "#5E94D4", "#165DB1", "#14519A", "#114584", "#0E396E"]
+    tum_cgrad = cgrad(tum_blues)
+
     p = heatmap(rx, ry, evals, alpha=0.9, xlabel="a", ylabel="n0", title="Fisher Information", 
         color=tum_cgrad, colorbar=false, xticks = [0.0, 1.0, 2.0], yticks = [1.0, 2.0])
     contour!(rx, ry, evals, linewidth=1, color=tum_cgrad, levels=300, label=false)
