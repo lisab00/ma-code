@@ -46,7 +46,7 @@ function compute_sobol_indices(N::Int64, dens_a::Distribution, dens_m::Distribut
     sobol_n = [analyze(data, n[:,j]) for j in 1:M]
     sobol_w = [analyze(data, w[:,j]) for j in 1:M]
 
-    return sobol_n, sobol_w
+    return sobol_n, sobol_w, n, w
 end
 
 
@@ -70,7 +70,7 @@ function sobol_index_subplot(sobol::Vector, comp::String; title::String="", M::I
         "#9ABCE4",  # w0  → TUM blue light-dark
         "#FAD080"   # n0  → TUM orange-2
     ]
-    parameters = ["a", "m", "w0", "n0"];
+    parameters = [L"$a$", L"$m$", L"$w_0$", L"$n_0$"];
 
     # extract indices for plotting
     fo = [sobol[i][:firstorder] for i in 1:M]
@@ -86,8 +86,8 @@ function sobol_index_subplot(sobol::Vector, comp::String; title::String="", M::I
     for k in 1:4
         col = colors[k]
         prm = parameters[k]
-        plot!(times, getindex.(fo, k), label="$prm", lw=2, color=col, linestyle=:solid)
-        plot!(times, getindex.(to, k), label="", lw=2, color=col, linestyle=:dash)
+        plot!(times, getindex.(fo, k), label="$prm", lw=3, color=col, linestyle=:solid, legendfontsize=14, xtickfontsize=10, ytickfontsize=10)
+        plot!(times, getindex.(to, k), label="", lw=3, color=col, linestyle=:dash, legendfontsize=14, xtickfontsize=10, ytickfontsize=10)
     end
     #xlabel!("Time")
     ylabel!("Sobol indices $comp")
