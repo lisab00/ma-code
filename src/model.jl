@@ -72,7 +72,7 @@ function sol_klausmeier(hprm::Hyperprm; t_fixed::Bool=false, t_end::Float64=100.
 
     prob = ODEProblem(klausmeier!, u0, tspan, p)
     sol = solve(prob,
-        saveat=0.1  # FE step size 0.1, save at equidistant range
+        saveat=0.1  # save at equidistant range
     )
     df_sol = DataFrame(time=sol.t, w=sol[1, :], n=sol[2, :])
 
