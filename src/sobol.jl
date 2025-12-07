@@ -44,8 +44,8 @@ function compute_sobol_indices(N::Int64, dens_a::Distribution, dens_m::Distribut
     end
 
     # compute sobol indices
-    sobol_n = [analyze(data, n[:,j]) for j in 1:M]
-    sobol_w = [analyze(data, w[:,j]) for j in 1:M]
+    sobol_n = [analyze(data, n[:,j], progress_meter=false, num_resamples=nothing, conf_level=nothing) for j in 1:M]
+    sobol_w = [analyze(data, w[:,j], progress_meter=false, num_resamples=nothing, conf_level=nothing) for j in 1:M]
 
     return sobol_n, sobol_w
 end
