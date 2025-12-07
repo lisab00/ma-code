@@ -1,14 +1,14 @@
 export compute_sobol_indices, sobol_index_subplot, sobol_index_subplot_wn
 
 """
-    function compute_sobol_indices(N::Int64, dens_a::Distribution, dens_m::Distribution, dens_w0::Distribution, dens_n0::Distribution, 
+    compute_sobol_indices(N::Int64, dens_a::Distribution, dens_m::Distribution, dens_w0::Distribution, dens_n0::Distribution, 
         M::Int64, t_fixed::Bool, t_end::Float64)
 
-compute sobol indices using the package GlobalSensitivityAnalysis.jl
+Compute sobol indices using the package GlobalSensitivityAnalysis.jl.
 
 # Arguments
     - `N::Int64`: Sample size of sobol index computation
-    - `dens_a::Distributiom`: density of a
+    - `dens_a::Distribution`: density of a
     - `dens_m::Distribution`: density of m
     - `dens_w0::Distribution`: density of w0
     - `dens_n0::Distribution`: density of n0
@@ -17,7 +17,7 @@ compute sobol indices using the package GlobalSensitivityAnalysis.jl
     - `t_end::Float64`: indicates end of time window in model simulation
 
 # Returns
-    - `Matrix{Float64}`: matrix containting samples for Sobol index computation
+    - `Tuple{Vector, Vector}`: A tuple containing two vectors. Each vector contains the Sobol analysis results (indices) for variables `n` and `w` respectively at each measurement point `M`.
 """
 function compute_sobol_indices(N::Int64, dens_a::Distribution, dens_m::Distribution, dens_w0::Distribution, dens_n0::Distribution,
     M::Int64, t_fixed::Bool, t_end::Float64)
@@ -28,6 +28,7 @@ function compute_sobol_indices(N::Int64, dens_a::Distribution, dens_m::Distribut
         :m => dens_m,
         :w0 => dens_w0,
         :n0 => dens_n0),
+        calc_second_order = false,
         N=N
     )
     # create samples
