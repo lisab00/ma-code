@@ -13,7 +13,7 @@ The following are implemented (amongst others):
 - Forward UQ with Monte Carlo simulations
 - Simulation of model trajectories and bifurcation behavior
 
-In `src/` all the functionalities are implemented; `notebooks` contains all experiments conducted in Jupyter notebooks; `plots/` stores all resulting plots.
+In `src/` all the functionalities are implemented; `notebooks/` contains all experiments conducted in Jupyter notebooks; `plots/` stores all resulting plots.
 
 ##### Main references:
 <sub>
