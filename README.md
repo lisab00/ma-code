@@ -8,7 +8,7 @@ The goal is to systematically assess parameter identifiability and uncertainty a
 We treat the model in a Bayesian setting and try to estimate posterior parameter distributions using Gaussian approximation of the posterior.
 
 The following are implemented (amongst others):
-- Global Sensitvity Analysis using Sobol indices
+- Global sensitvity analysis using Sobol indices
 - Solution and UQ assessment of the inverse problem 
 - Forward UQ with Monte Carlo simulations
 - Simulation of model trajectories and bifurcation behavior
