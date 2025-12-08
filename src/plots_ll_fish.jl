@@ -25,18 +25,20 @@ function plot_ll(evals_df::DataFrame, cutoff::Int64, point::Vector, prm_keys::Ve
         p = heatmap(rx, ry, evals_cutoff, alpha=0.9, xlabel=prm_keys[1], ylabel=prm_keys[2], title="", 
             #color=reverse(tum_cgrad),
             color=tum_cgrad,
-            colorbar=false, xticks = [0.0, 1.0, 2.0], yticks = [1.0, 2.0])
+            colorbar=false, xticks = [0.0, 1.0, 2.0], yticks = [1.0, 2.0],
+            xtickfontsize=10, ytickfontsize=10, legendfontsize=14)
         contour!(rx, ry, evals_cutoff, linewidth=1, linecolor=:black, levels=levels, label=false)
         if grid_plot
             scatter!([point[1]],[point[2]], markershape=:x, markerstrokewidth=1, markersize=2, color="#F7811E", label="")
         else
-            scatter!([point[1]],[point[2]], markershape=:x, markerstrokewidth=3, markersize=6, color="#F7811E", label="MLE")
+            scatter!([point[1]],[point[2]], markershape=:x, markerstrokewidth=5, markersize=8, color="#F7811E", label="MLE")
         end
     else
         rx = 0.0:0.01:2.0
         evals = evals_df[:,1]
         evals_cutoff = map(z -> z < cutoff ? NaN : z, evals)
-        p = plot(rx, evals_cutoff, linewidth=2, color="#3070B3", xlabel=prm_keys[1], ylabel="", label="", title="")
+        p = plot(rx, evals_cutoff, linewidth=3, color="#3070B3", xlabel=prm_keys[1], ylabel="", label="", title="",
+        xtickfontsize=10, ytickfontsize=10, legendfontsize=14)
         vline!([point[1]], color="#F7811E", label="MLE", linestyle=:dash, linewidth=2)
     end
     return p
