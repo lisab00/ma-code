@@ -144,14 +144,15 @@ function plot_prob_traj(times::Vector{Float64}, n_traj_sampled::Vector{Any}, w_t
 
     n = length(n_traj_sampled)
 
-    plot_traj = plot(times, n_mean, label="mean n", lw=2, color="#F7811E", legend=:bottomright, title="")
-    plot!(times, w_mean, label="mean w", lw=2, color="#3070B3")
+    plot_traj = plot(times, n_mean, label=L"mean $n$", lw=4, color="#F7811E", legend=:topright, title="",
+    xtickfontsize=10, ytickfontsize=10, legendfontsize=14)
+    plot!(times, w_mean, label=L"mean $w$", lw=4, color="#3070B3")
     for i in range(1, n)
-        plot!(times,n_traj_sampled[i], color="#F7811E", alpha=0.15, label="")
-        plot!(times,w_traj_sampled[i], color="#3070B3", alpha=0.15,label="")
+        plot!(times,n_traj_sampled[i], color="#F7811E", alpha=0.12, label="")
+        plot!(times,w_traj_sampled[i], color="#3070B3", alpha=0.12,label="")
     end
-    plot!(times, data_true[!,"n"], lw=2, color=:black, label="",linestyle=:dash)
-    plot!(times, data_true[!,"w"], lw=2, color=:black, label="", linestyle=:dash)
+    plot!(times, data_true[!,"n"], lw=3, color=:black, label="",linestyle=:dash)
+    plot!(times, data_true[!,"w"], lw=3, color=:black, label="", linestyle=:dash)
     return plot_traj
 end
 
@@ -169,8 +170,9 @@ Plots the sample density of the trajectories at specified time point. Vertical l
 function plot_sample_dens_t(t_pt_sample_dens::Int64, traj_sampled::Vector{Any}, traj_t_true::Float64, traj_name::String)
     traj_t_sam = [s[t_pt_sample_dens] for s in traj_sampled]
     traj_t_dens = kde(traj_t_sam)
-    plot_dens = plot(traj_t_dens.x, traj_t_dens.density, color="#3070B3", lw=2, ylabel="sample density at t=$t_pt_sample_dens", label="$traj_name", title="")
-    vline!([traj_t_true], color=:black, linestyle=:dash, label="true value")
+    plot_dens = plot(traj_t_dens.x, traj_t_dens.density, color="#3070B3", lw=3, ylabel="sample density at t=$t_pt_sample_dens", label="$traj_name", title="",
+    xtickfontsize=10, ytickfontsize=10, legendfontsize=14)
+    vline!([traj_t_true], color=:black, linestyle=:dash, lw=3, label="true")
     return plot_dens
 end
 
