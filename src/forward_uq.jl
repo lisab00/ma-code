@@ -1,9 +1,8 @@
 export forward_uq
 
 """
-    function forward_uq(mle::Vector, cov::Matrix, prm_keys::Vector, prm_true::Vector;
-        t_pt_sample_dens::Int64=75, w0::Float64=1.0, n0::Float64=1.5, a::Float64=1.3, 
-        m::Float64=0.45, M::Int64=100, n::Int64=100, t_fixed::Bool=false, 
+    function forward_uq(mle::Vector, cov::Matrix, prm_keys::Vector, prm_true::Vector, hprm::Hyperprm;
+        t_pt_sample_dens::Int64=75, n::Int64=100, t_fixed::Bool=false, 
         t_end::Float64=100.0, t_step::Float64=1.0)
 
 Perform forward uncertainty quantification (UQ) using the Fisher approximation around the MLE.  
@@ -11,8 +10,8 @@ Samples parameter combinations from the Gaussian approximation `N(mle, cov)` and
 the Klausmeier model to obtain probabilistic trajectories of the system states.
 
 Also compares sampled trajectories to the true (noise-free) solution and visualizes:
-- the probabilistic envelope of trajectories (`n` and `w`)
-- the sample distributions of state values at a given observation time point.
+- the probabilistic trajectories (`n` and `w`)
+- the sample distributions of state values at a given observation time point compared to true value.
 
 # Arguments
     - `mle::Vector`: estimated MLE vector for parameters (mean of sampling distribution)
@@ -47,8 +46,7 @@ function forward_uq(mle::Vector, cov::Matrix, prm_keys::Vector, prm_true::Vector
     # plot probabilistic solution trajectories
     trajectories = plot_prob_traj(times, n_traj_sampled, w_traj_sampled, data_true)
 
-    # plot sample densities at t_pt_sample_dens
-    # true values at t_pt_sample_dens
+    # plot sample densities and true values at t_pt_sample_dens
     n_t_true, w_t_true = data_true[!,"n"][t_pt_sample_dens], data_true[!,"w"][t_pt_sample_dens]
 
     sample_dens_n = plot_sample_dens_t(t_pt_sample_dens, n_traj_sampled, n_t_true, "n")
@@ -62,37 +60,28 @@ function forward_uq(mle::Vector, cov::Matrix, prm_keys::Vector, prm_true::Vector
 end
 
 """
-    function sample_am_traj(mle::Vector, cov::Matrix, prm_keys::Vector, n::Int64;
-        w0::Float64=1.0, n0::Float64=1.5, a::Float64=1.3, m::Float64=0.45, M::Int64=100,
+    function sample_am_traj(mle::Vector, cov::Matrix, prm_keys::Vector, hprm::Hyperprm, n::Int64;
         t_fixed::Bool=true, t_end::Float64=100.0, t_step::Float64=1.0)
 
-Generate sample trajectories of the Klausmeier model based on the Fisher (Gaussian) approximation 
+Generate sample trajectories of the Klausmeier model based on the Fisher approximation 
 around the MLE. Samples `n` parameter combinations from the multivariate normal distribution 
-`N(mle, cov)` and propagates them through the model to produce probabilistic solution ensembles.
+`N(mle, cov)` and propagates them through the model to produce probabilistic solution trajectories.
 
 # Arguments
-    - `mle::Vector`: mean (MLE) of the Gaussian sampling distribution
-    - `cov::Matrix`: covariance matrix (Fisher approximation of parameter uncertainty)
+    - `mle::Vector`: MLE parameter estimate
+    - `cov::Matrix`: covariance matrix of parameter estimates
     - `prm_keys::Vector`: symbols of the parameters that are varied (e.g., `[:a, :m]`)
     - `n::Int64`: number of parameter samples to draw
-    - `w0::Float64`: initial water concentration (default: 1.0)
-    - `n0::Float64`: initial nutrient concentration (default: 1.5)
-    - `a::Float64`: growth rate parameter (default: 1.3)
-    - `m::Float64`: mortality rate parameter (default: 0.45)
-    - `M::Int64`: number of observation points in the simulation
-    - `noise::Float64`: noise level added to simulated data (default: 0.0)
-    - `t_fixed::Bool`: whether to simulate over a fixed time window (`true`) or variable (`false`)
-    - `t_end::Float64`: end of simulation time window (if `t_fixed=true`)
-    - `t_step::Float64`: time step between observations (if `t_fixed=false`)
 
 # Returns
     `Tuple{Vector, Vector}`:
-    - `n_traj_sampled`: vector of sampled nutrient trajectories
+    - `n_traj_sampled`: vector of sampled biomass trajectories
     - `w_traj_sampled`: vector of sampled water trajectories
 
 Each trajectory corresponds to one sampled parameter realization drawn from the Fisher approximation.
 """
 function sample_am_traj(mle::Vector, cov::Matrix, prm_keys::Vector, hprm::Hyperprm, n::Int64; t_fixed::Bool=true, t_end::Float64=100.0, t_step::Float64=1.0)
+
     # Fisher approximation
     if length(mle) == 1
         dist = Normal(mle[1], sqrt(cov[1]))
@@ -124,13 +113,14 @@ function sample_am_traj(mle::Vector, cov::Matrix, prm_keys::Vector, hprm::Hyperp
         push!(n_traj_sampled, sol[!,"n"])
         push!(w_traj_sampled, sol[!,"w"])
     end
+
     return n_traj_sampled, w_traj_sampled
 end
 
 """
     function plot_prob_traj(times::Vector{Float64}, n_traj_sampled::Vector{Any}, w_traj_sampled::Vector{Any}, data_true::DataFrame)
 
-Plot probabilistic trajectories of model simulations. Black line indicates true, noiseless solution.
+Plot probabilistic trajectories of model simulations. Black line indicates true, noise-free solution.
 
 # Inputs:
     - `times::Vector{Float64}"`: considered time points of solution
@@ -139,6 +129,7 @@ Plot probabilistic trajectories of model simulations. Black line indicates true,
     - `data_true::DataFrame`: output of sol_klausmeier for true parameter values (not noisy!)
 """
 function plot_prob_traj(times::Vector{Float64}, n_traj_sampled::Vector{Any}, w_traj_sampled::Vector{Any}, data_true::DataFrame)
+
     n_mean = mean(n_traj_sampled, dims=1)
     w_mean = mean(w_traj_sampled, dims=1)
 
@@ -147,19 +138,22 @@ function plot_prob_traj(times::Vector{Float64}, n_traj_sampled::Vector{Any}, w_t
     plot_traj = plot(times, n_mean, label=L"mean $n$", lw=4, color="#F7811E", legend=:topright, title="",
     xtickfontsize=10, ytickfontsize=10, legendfontsize=14)
     plot!(times, w_mean, label=L"mean $w$", lw=4, color="#3070B3")
+
     for i in range(1, n)
         plot!(times,n_traj_sampled[i], color="#F7811E", alpha=0.12, label="")
         plot!(times,w_traj_sampled[i], color="#3070B3", alpha=0.12,label="")
     end
+
     plot!(times, data_true[!,"n"], lw=3, color=:black, label="",linestyle=:dash)
     plot!(times, data_true[!,"w"], lw=3, color=:black, label="", linestyle=:dash)
+
     return plot_traj
 end
 
 """
     function plot_sample_dens_t(t_pt_sample_dens::Int64, traj_sampled::Vector{Any}, traj_t_true::Float64, traj_name::String)
 
-Plots the sample density of the trajectories at specified time point. Vertical lines indicate true values of noiseless solution at t_pt_sample_dens.
+Plots the sample density of the trajectories at specified time point. Vertical lines indicate true values of noise-free solution at t_pt_sample_dens.
 
 # Args:
     - `t_pt_sample_dens::Int64`: time point at which sample density is computed
@@ -175,5 +169,3 @@ function plot_sample_dens_t(t_pt_sample_dens::Int64, traj_sampled::Vector{Any}, 
     vline!([traj_t_true], color=:black, linestyle=:dash, lw=3, label="true")
     return plot_dens
 end
-
-

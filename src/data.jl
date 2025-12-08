@@ -1,6 +1,5 @@
 export gen_store_ll_data, gen_all_fish_data_an0_plane
 
-
 # Tools
 """
     function create_grid()
@@ -18,7 +17,7 @@ end
 """
     function randomize_data!(df::DataFrame, noise::Float64)
 
-add mean-zero Gaussian noise to simulated data.
+Add mean-zero Gaussian noise to simulated data.
 
 # Arguments
     - `df::DataFrame`: data to add noise on
@@ -42,7 +41,7 @@ end
 """
     function compute_mle(prm_keys::Vector, hprm::Hyperprm, true_val::DataFrame; t_fixed::Bool=false, t_end::Float64=100.0, t_step::Float64=1.0, obs_late::Bool=false, t_obs::Float64=100.0, N::Int64=5)
 
-compute the maximum likelihood estimate given data observations by minimizing the negative log-likelihood function using the Optim.jl package.
+Compute the maximum likelihood estimate given data observations by minimizing the negative log-likelihood function using the Optim.jl package.
 We employ multiple restart optimization to obtain a robust estimate.
 
 # Arguments
@@ -71,10 +70,10 @@ end
 Perform Maximum Likelihood estimation for N different starting points. Goal is to find global minimum.
 
 # Arguments
-    - `N::Int64`: Number of random restart trials
-    - `prm_keys::Vector`: Names of parameters to be estimated (e.g., `[:a, :n0]`)
-    - `hprm::Hyperprm`: Hyperparameter struct defining model configuration and noise
-    - `true_val::DataFrame`: Observed data used for likelihood evaluation
+    - `N::Int64`: number of random restart trials
+    - `prm_keys::Vector`: names of parameters to be estimated (e.g., `[:a, :n0]`)
+    - `hprm::Hyperprm`: hyperparameter struct defining model configuration and noise
+    - `true_val::DataFrame`: observed data used for likelihood evaluation
 
 # Returns
     - `Matrix`: initial values used in optimization
@@ -117,7 +116,7 @@ end
 """
     function store_ll_data(w0::Float64,n0::Float64,a::Float64,m::Float64,M::Int64,noise::Float64,df::DataFrame, path_to_store::String)
 
-stores data evaluated on grid in a csv file.
+Stores data evaluated on grid in a csv file.
 Name of form "ll_w0_n0_a_m_M_noise.csv"
 
 # Arguments
@@ -131,7 +130,7 @@ end
 """
     function compute_ll(x::Vector, prm_keys::Vector, hprm::Hyperprm, true_val::DataFrame; t_fixed::Bool=false, t_end::Float64=100.0, t_step::Float64=1.0, obs_late::Bool=false, t_obs::Float64=100.0)
 
-compute the log-likelihood in least-squares form for Klausmeier model for data with Gaussian noise. First, simulate Klausmeier model for given hyperparameters and noise level. Then, compare to true trajectories.
+Compute the log-likelihood in least-squares form for Klausmeier model for data with Gaussian noise. First, simulate Klausmeier model for given hyperparameters and noise level. Then, compare to true trajectories.
 Includes x variables needed for ForwardDiff and Optim.
 
 # Arguments
@@ -164,6 +163,7 @@ function compute_ll(x::Vector, prm_keys::Vector, hprm::Hyperprm, true_val::DataF
     else
         ll = -0.5 * 1/hprm.noise * sum((true_val[:,"n"] - pred_val[:,"n"]) .^2) - 0.5 * 1/hprm.noise * sum((true_val[:,"w"] - pred_val[:,"w"]) .^2) # add up ll for both trajectories
     end
+
     return ll
 end
 
@@ -214,7 +214,7 @@ end
 """
     function gen_store_ll_data(points::Vector{Vector{Float64}}, prm_keys::Vector, M_vals::Vector{Int64}, noise_vals::Vector{Float64}, path::String; a::Float64=1.3, m::Float64=0.45, n0::Float64=1.0, w0::Float64=1.0, t_fixed::Bool=false, t_end::Float64=100.0, t_step::Float64=1.0, obs_late::Bool=false, t_obs::Float64=100.0)
 
-function that generates and stores all the ll data needed. On all a,n0,M,noise prm combinations specifed.
+Function that generates and stores all the ll data needed. On all a,n0,M,noise prm combinations specified.
 
 # Arguments
     - `points::Vector{Vector{Float64}}`: Parameter grid points (e.g. combinations of `[a, m]`) for which LL data are computed
@@ -262,8 +262,7 @@ end
 """
     function store_fish_data(M::Int64,noise::Float64,df::DataFrame, path::String)
 
-stores data evaluated on grid in a csv file.
-Name of form "fish_M_noise.csv"
+Stores data evaluated on grid in a csv file. File name is of form "fish_M_noise.csv"
 
 # Arguments
     - `df::DataFrame`: df to store
@@ -276,7 +275,7 @@ end
 """
     function compute_fi(eval_pt::Vector{Float64}, prm_keys::Vector, hprm::Hyperprm, true_val::DataFrame; t_fixed::Bool=false, t_end::Float64=100.0, t_step::Float64=1.0, obs_late::Bool=false, t_obs::Float64=100.0)
 
-compute the Fisher information at evaluation point. The Fisher information is given by the trace of the negative Hessian of the log-likelihood function.
+Compute the scalar Fisher information at evaluation point. The scalar Fisher information is given by the trace of the negative Hessian of the log-likelihood function (=Fisher information matrix).
 
 # Arguments
     - `eval_pt::Vector{Float64}`: Parameter vector at which FI is evaluated
@@ -292,66 +291,12 @@ function compute_fi(eval_pt::Vector{Float64}, prm_keys::Vector, hprm::Hyperprm, 
     return tr(-H)
 end
 
-"""
-    function gen_all_fish_data_prm_plane(prm_keys::Vector, M_vals::Vector, noise_vals::Vector, path::String; a::Float64=1.3, m::Float64=0.45, n0::Float64=1.0, w0::Float64=1.0, t_fixed::Bool=false, t_end::Float64=100.0, t_step::Float64=1.0, obs_late::Bool=false, t_obs::Float64=100.0)
-"""
-# brauch ich das? ggf noch erweitern auf 1D parameter
-function gen_all_fish_data_prm_plane(prm_keys::Vector, M_vals::Vector, noise_vals::Vector, path::String; a::Float64=1.3, m::Float64=0.45, n0::Float64=1.0, w0::Float64=1.0, t_fixed::Bool=false, t_end::Float64=100.0, t_step::Float64=1.0, obs_late::Bool=false, t_obs::Float64=100.0)
-    for M in M_vals
-        for noise in noise_vals
-
-            grid = create_grid()
-            fish = zeros(201, 201)
-
-            # keep track of whether the optimization algo terminates successfully when finding the MLE
-            success_counter = 0
-            eval_pt_counter = 0
-
-            # evaluate fisher info on grid
-            for i in range(1, 201)
-                for j in range(1, 201)
-                    eval_pt_counter = eval_pt_counter + 1 # total number of optimizations
-
-                    pt = grid[i,j] # true observation parameter point
-
-                    # assign point values to prm_keys
-                    prms = Dict(zip(prm_keys, pt))
-                    a_val  = get(prms, :a, a)
-                    n0_val = get(prms, :n0, n0)
-                    m_val  = get(prms, :m, m)
-                    w0_val = get(prms, :w0, w0)
-
-                    hprm = Hyperprm(w0_val, n0_val, a_val, m_val, M, noise)
-
-                    sol_true = sol_klausmeier(hprm; t_fixed=t_fixed, t_end=t_end, t_step=t_step, obs_late=obs_late, t_obs=t_obs)
-                    sol_true = randomize_data!(sol_true, hprm.noise) # include noise
-
-                    mle, success = compute_mle(prm_keys, hprm, sol_true; t_fixed=t_fixed, t_end=t_end, t_step=t_step, obs_late=obs_late, t_obs=t_obs)
-
-                    # evaluate Fi at MLE
-                    fish[i,j] = compute_fi(mle, prm_keys, hprm, sol_true; t_fixed=t_fixed, t_end=t_end, t_step=t_step, obs_late=obs_late, t_obs=t_obs)
-
-                    success_counter = success_counter + success # number of successfull optimizations
-                end
-            end
-
-            success_fraction = success_counter / eval_pt_counter
-            println("MLE terminated with success in $success_fraction cases.")
-            
-            # create data frame
-            x_eval_pts = string.(0.0:0.01:2.0)
-            df_fish = DataFrame(fish, x_eval_pts)
-
-            store_fish_data(M, noise, df_fish, path)
-        end
-    end
-end
 
 """
     function gen_all_fish_data_an0_plane(prm_keys::Vector, M_vals::Vector, noise_vals::Vector, path::String;
                                          m::Float64=0.45, w0::Float64=1.0, t_fixed::Bool=false, t_end::Float64=100.0, t_step::Float64=1.0, obs_late::Bool=false, t_obs::Float64=100.0, N::Int64=5)
 
-Generate and store Fisher Information data across a grid of `(a, n₀)` parameter values for different sample sizes and noise levels.  
+Generate and store Fisher Information data across a grid of `(a, n0)` parameter values for different sample sizes and noise levels.  
 For each parameter combination, the Klausmeier model is simulated, the MLE is estimated via multiple restarts, and the Fisher Information is computed at the MLE.
 
 # Arguments
@@ -370,7 +315,7 @@ For each parameter combination, the Klausmeier model is simulated, the MLE is es
 
 # Behavior
     - Loops over all combinations of `M_vals` and `noise_vals`
-    - Constructs a parameter grid in `(a, n₀)` space
+    - Constructs a parameter grid in `(a, n0)` space
     - Simulates data with Gaussian noise for each grid point
     - Computes the MLE using multiple-restart optimization
     - Evaluates Fisher Information at the MLE

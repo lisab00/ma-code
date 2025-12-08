@@ -1,7 +1,7 @@
 export plot_ll_grid, plot_fisher_grid, plot_ll
 
 """
-    function plot_ll(evals_df::DataFrame, cutoff::Int64, mle::Vector, prm_keys::Vector)
+    function plot_ll(evals_df::DataFrame, cutoff::Int64, mle::Vector, prm_keys::Vector; grid_plot::Bool=false, levels::Int64=300)
 
 Plot of log-likelihood evaluations highlighting the MLE.
 
@@ -10,6 +10,8 @@ Plot of log-likelihood evaluations highlighting the MLE.
     - `cutoff::Int64`: Minimum value threshold; entries below this value are ignored (set to NaN)
     - `mle::Vector`: Maximum likelihood estimate of the parameters (used to mark the best estimate)
     - `prm_keys::Vector`: Names of the inferred parameters
+    - `grid_plot::Bool`: Indicates whether plot is part of 3x3 grid
+    - `levels::Int64`: Number of levels in contour plot
 """
 function plot_ll(evals_df::DataFrame, cutoff::Int64, point::Vector, prm_keys::Vector; grid_plot::Bool=false, levels::Int64=300)
 
@@ -23,7 +25,7 @@ function plot_ll(evals_df::DataFrame, cutoff::Int64, point::Vector, prm_keys::Ve
         evals_cutoff = map(z -> z < cutoff ? NaN : z, evals)
 
         p = heatmap(rx, ry, evals_cutoff, alpha=0.9, xlabel=prm_keys[1], ylabel=prm_keys[2], title="", 
-            #color=reverse(tum_cgrad),
+            #color=reverse(tum_cgrad), # different coloring option
             color=tum_cgrad,
             colorbar=false, xticks = [0.0, 1.0, 2.0], yticks = [1.0, 2.0],
             xtickfontsize=10, ytickfontsize=10, legendfontsize=14)
@@ -41,11 +43,12 @@ function plot_ll(evals_df::DataFrame, cutoff::Int64, point::Vector, prm_keys::Ve
         xtickfontsize=10, ytickfontsize=10, legendfontsize=14)
         vline!([point[1]], color="#F7811E", label="MLE", linestyle=:dash, linewidth=2)
     end
+
     return p
 end
 
 """
-    function plot_ll_grid(point::Vector, prm_keys::Vector, noise_vals::Vector, M_vals::Vector, cutoff::Int64, path_to_read::String; a::Float64=1.3, m::Float64=0.45, n0::Float64=1.0, w0::Float64=1.0)
+    function plot_ll_grid(point::Vector, prm_keys::Vector, noise_vals::Vector, M_vals::Vector, cutoff::Int64, path_to_read::String; a::Float64=1.3, m::Float64=0.45, n0::Float64=1.0, w0::Float64=1.0, grid_plot::Bool=true, levels::Int64=levels)
 
 
 Create a 3×3 grid of log-likelihood heatmaps for different noise and M values.
@@ -58,8 +61,9 @@ Create a 3×3 grid of log-likelihood heatmaps for different noise and M values.
     - `M_vals`: Vector of 3 M values (in decreasing order)
     - `lower_bound`: cutoff below which ll values are truncated
     - `path_to_read`: path to folder where CSVs are stored
+    - `levels::Int64`: Number of levels in contour plot
 """
-function plot_ll_grid(point::Vector, prm_keys::Vector, noise_vals::Vector, M_vals::Vector, cutoff::Int64, path_to_read::String; a::Float64=1.3, m::Float64=0.45, n0::Float64=1.0, w0::Float64=1.0, grid_plot::Bool=false, levels=levels)
+function plot_ll_grid(point::Vector, prm_keys::Vector, noise_vals::Vector, M_vals::Vector, cutoff::Int64, path_to_read::String; a::Float64=1.3, m::Float64=0.45, n0::Float64=1.0, w0::Float64=1.0, grid_plot::Bool=true, levels::Int64=levels)
 
     plots_matrix = Array{Any}(undef, 3, 3)
 

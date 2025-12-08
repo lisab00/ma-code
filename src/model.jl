@@ -3,7 +3,7 @@ export Hyperprm, sol_klausmeier, randomize_data!, bif_plot, bif_plot!
 """
     Hyperprm <: AbstractHyperprm
 
-All the parameters that can be set in the klausmeier model.
+All the parameters that can be set in the Klausmeier model.
 
 # Fields:
     - `w0`: initial value for water compartment
@@ -27,7 +27,7 @@ end
 """
     function klausmeier!(du,u,p,t)
 
-define the klausmeier model equations.
+Define the klausmeier model equations.
 
 # Arguments
     - `du, u`: u[1], du[1] denote water compartment w. u[2], du[2] biomass compartment n
@@ -41,9 +41,9 @@ end
 """
     function sol_klausmeier(hprm::Hyperprm; t_fixed::Bool=false, t_end::Float64=100.0, t_step::Float64=1.0, obs_late::Bool=false, t_obs::Float64=100.0)
 
-solve/ simulate the klausmeier model for given set of parameters and select number of observations samples M.
+Solve/ simulate the Klausmeier model for given set of parameters and select number of observations samples M.
 Integration time window can either be fixed (to t_end) or variable.
-In the former case M denotes the sample density within fixed time window. In the latter case integration time ends after observing M samples of time distance t_step.
+In the former case M denotes the sample density (equidistant) within the fixed time window. In the latter case integration time ends after observing M samples of time distance t_step.
 The model is always solved with mesh size 0.1 and M samples are taken equidistantly.
 Optionally, only late observations starting at `t_obs` can be returned by setting `obs_late=true`.
 
@@ -92,7 +92,7 @@ end
 """
     function select_M_rows(df::DataFrame, M::Real)
 
-select M rows in equidistant steps from DataFrame.
+Select M rows in equidistant steps from DataFrame.
 
 # Arguments
     - `df::DataFrame`: DataFrame from which rows are selected
@@ -109,7 +109,7 @@ end
 """
     function step_M_times(df::DataFrame, M_end::Float64, t_step::Float64)
 
-start at t=0 and make time steps with length t_step until M_end. M_end=M*t_step such that we obtain M equidistand time steps.
+Start at t=0 and make time steps with length t_step until M_end. M_end=M*t_step such that we obtain M equidistand time steps.
 
 # Arguments
     - `df::DataFrame`: contain ODE solution with "time" column
@@ -137,7 +137,7 @@ components as a function of the water input parameter `a`.
 # Arguments
     - `m::Float64`: mortality rate parameter in the Klausmeier model
     - `comp::String`: specifies which component to plot — `"n"` for biomass or `"w"` for water
-    - `points=[]`: optional list of `(a, value)` tuples to highlight specific points on the bifurcation diagram
+    - `points=[]`: optional list of `(a, value)` tuples to highlight specific points in the bifurcation diagram
 """
 function bif_plot(m::Float64, comp::String; points=[])
     a_vals = range(2*m, stop=2, length=400)
@@ -176,7 +176,7 @@ end
 """
     function bif_plot!(m::Float64, comp::String)
 
-adds bifurcation diagram to an existing plot (for documentation see bif_plot)
+Adds bifurcation diagram to an existing plot (for documentation see bif_plot)
 """
 function bif_plot!(m::Float64, comp::String)
     a_vals = range(2*m, stop=2, length=400)

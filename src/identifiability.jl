@@ -6,7 +6,7 @@ export assess_practical_identifiability, analyze_ll
         t_fixed::Bool=false, t_end::Float64=50.0, t_step::Float64=1.0, obs_late::Bool=false, t_obs::Float64=100.0, N::Int64=20)
 
 Assess the practical identifiability of parameters in the Klausmeier model using multiple-restart MLE 
-and Fisher information approximations.
+and Fisher information approximation.
 
 # Arguments
     - `prm_keys::Vector`: A vector of the parameter names that are estimated by the MLE
@@ -70,7 +70,7 @@ end
 """
     function analyze_ll(mle::Vector, prm_keys::Vector, hprm_true::Hyperprm, cutoff::Int64; 
                         t_fixed::Bool=false, t_end::Float64=100.0, t_step::Float64=1.0, 
-                        obs_late::Bool=false, t_obs::Float64=100.0)
+                        obs_late::Bool=false, t_obs::Float64=100.0, levels::Int64=300)
 
 Generate and visualize the log-likelihood surface of the Klausmeier model around the true parameters.
 The function evaluates the log-likelihood over a parameter grid, applies a cutoff to filter low-probability regions,
@@ -81,6 +81,7 @@ and produces a corresponding heatmap/ surface plot highlighting the MLE.
     - `prm_keys::Vector`: Names of the parameters for which the ll surface is evaluated
     - `hprm_true::Hyperprm`: True underlying parameters used to simulate data
     - `cutoff::Int64`: Minimum ll value retained for visualization; smaller values are masked
+    - `levels::Int64`: Levels plotted in contour plot
 """
 function analyze_ll(mle::Vector, prm_keys::Vector, hprm_true::Hyperprm, cutoff::Int64; t_fixed::Bool=false, t_end::Float64=100.0, t_step::Float64=1.0, obs_late::Bool=false, t_obs::Float64=100.0, levels::Int64=300)
     ll_data = gen_ll_evals(prm_keys, hprm_true, t_fixed=t_fixed, t_end=t_end, t_step=t_step, obs_late=obs_late, t_obs=t_obs)
@@ -93,7 +94,7 @@ end
     function correlation_covariance_matrix(eval_pt::Vector{Float64}, prm_keys::Vector, hprm::Hyperprm, true_val::DataFrame;
         t_fixed::Bool=false, t_end::Float64=100.0, t_step::Float64=1.0, obs_late::Bool=false, t_obs::Float64=100.0)
 
-Compute the covariance and correlation matrices of the estimated parameters using the Fisher Information Matrix (FIM) approximation at a given evaluation point.
+Compute the covariance and correlation matrices of the estimated parameters using the Fisher approximation at a given evaluation point.
 We take the inverse of the Hessian of the negative log likelihood as approximation of the covariance matrix. The correlation matrix is obtained by normalization.
 
 # Arguments
@@ -117,7 +118,7 @@ end
 """
     function plot_mult_restart_mles(inits::Matrix, mles::Matrix, ind_best::Int64, prm_keys::Vector, hprm::Hyperprm; compare::Bool=true, N::Int64=20)
 
-Plot the results of multiple-restart MLEs for given parameters, highlighting the best estimate, initial guesses, and optionally the true parameter values.
+Plot the results of multiple-restart MLEs for given parameters, highlighting the best estimate, initial guesses, and the true parameter value.
 
 # Arguments
     - `inits::Matrix`: Initial parameter values used in the multiple restart MLEs (size N × n_prms)
@@ -203,7 +204,7 @@ end
 """
     function plot_gaussian(mle::Vector, cov::Matrix, prm_keys::Vector)
 
-Visualize the Gaussian (Fisher) approximation of parameter uncertainties based on the MLE and covariance matrix. Supports 1D and 2D parameter cases.
+Visualize the Fisher approximation of parameters based on the MLE and covariance matrix. Supports 1D and 2D parameter cases.
 
 # Arguments
     - `mle::Vector`: Maximum likelihood estimate of the parameters

@@ -31,6 +31,7 @@ function compute_sobol_indices(N::Int64, dens_a::Distribution, dens_m::Distribut
         calc_second_order = false,
         N=N
     )
+
     # create samples
     samples = GlobalSensitivityAnalysis.sample(data)
 
@@ -53,9 +54,9 @@ end
 
 # Plots
 """
-    function sobol_index_subplot(sobol::Vector, comp::String; title::String="", M::Int64=1000)
+    function sobol_index_subplot(sobol::Vector, comp::String; title::String="", M::Int64=1000, t_fixed::Bool=true, t_end::Float64=100.0)
 
-create plot of sobol indices for all parameters for one trajectory.
+Create plot of Sobol indices for all parameters for one trajectory.
     
 # Arguments:
     - `sobol::Vector`: sobol object returned by index computation
@@ -64,12 +65,11 @@ create plot of sobol indices for all parameters for one trajectory.
 """
 function sobol_index_subplot(sobol::Vector, comp::String; title::String="", M::Int64=1000, t_fixed::Bool=true, t_end::Float64=100.0)
 
-    #colors = [:blue, :turquoise, :orange, :red]
     colors = [
-        "#3070B3",  # a   → TUM blue brand
-        "#F7811E",  # m   → TUM orange
-        "#9ABCE4",  # w0  → TUM blue light-dark
-        "#FAD080"   # n0  → TUM orange-2
+        "#3070B3",  # a   
+        "#F7811E",  # m   
+        "#9ABCE4",  # w0  
+        "#FAD080"   # n0  
     ]
     parameters = [L"$a$", L"$m$", L"$w_0$", L"$n_0$"];
 
@@ -90,16 +90,18 @@ function sobol_index_subplot(sobol::Vector, comp::String; title::String="", M::I
         plot!(times, getindex.(fo, k), label="$prm", lw=3, color=col, linestyle=:solid, legendfontsize=14, xtickfontsize=10, ytickfontsize=10)
         plot!(times, getindex.(to, k), label="", lw=3, color=col, linestyle=:dash, legendfontsize=14, xtickfontsize=10, ytickfontsize=10)
     end
-    #xlabel!("Time")
+
+    #xlabel!("time")
     ylabel!("Sobol indices $comp")
     title!(title)
+
     return si_plot
 end
 
 """
-    function sobol_index_subplot_wn(sobol_n::Vector, sobol_w::Vector; title::String="", M::Int64=1000)
+    function sobol_index_subplot_wn(sobol_n::Vector, sobol_w::Vector; title::String="", M::Int64=1000, t_end::Float64=100.0)
 
-create plot of sobol indices for both trajectories underneath each other, for comparing.
+Create plot of sobol indices for both trajectories underneath each other, for comparison.
     
 # Arguments:
     - `sobol_n::Vector`: output of compute_sobol_indices for n compartment
