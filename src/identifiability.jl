@@ -132,39 +132,42 @@ function plot_mult_restart_mles(inits::Matrix, mles::Matrix, ind_best::Int64, pr
     n_prms = length(prm_keys)
     
     if n_prms == 1
-        p = plot(mles[:,1], label="MLEs $(prm_keys[1])", title="", color="#165DB1",linewidth=2, ylabel="", xlabel="restart index")
+        p = plot(mles[:,1], label="MLEs $(prm_keys[1])", title="", color="#165DB1",linewidth=3, ylabel="", xlabel="restart index",
+        xtickfontsize=10, ytickfontsize=10, legendfontsize=11)
         if hprm !== nothing && hasproperty(hprm, prm_keys[1])
-            hline!([getproperty(hprm, prm_keys[1])], linestyle=:dash, linewidth=2, color=:black, label="true parameter")
+            hline!([getproperty(hprm, prm_keys[1])], linestyle=:dash, linewidth=3, color=:black, label="true parameter")
         end
-        scatter!(1:N, mles[:,1], markershape=:square, markersize=2, color="#165DB1", label="")
+        scatter!(1:N, mles[:,1], markershape=:square, markersize=3, color="#165DB1", label="")
         if compare
-            plot!(inits[:,1], label="inits", color="#9ABCE4",linewidth=1)
-            scatter!(1:N, inits[:,1], markershape=:square, markersize=2, color="#9ABCE4", label="")
+            plot!(inits[:,1], label="inits", color="#9ABCE4",linewidth=2)
+            scatter!(1:N, inits[:,1], markershape=:square, markersize=3, color="#9ABCE4", label="")
         end
         scatter!([ind_best], [mles[ind_best, 1]], markershape=:x, markerstrokewidth=5, markersize=8, color="#F7811E", label="best estimate")
         return [p]
     else
         # subplot 1
-        p1 = plot(mles[:,1], label="MLEs $(prm_keys[1])", title="", color="#165DB1", linewidth=2, ylabel="", xlabel="restart index")
+        p1 = plot(mles[:,1], label="MLEs $(prm_keys[1])", title="", color="#165DB1", linewidth=2, ylabel="", xlabel="restart index",
+        xtickfontsize=10, ytickfontsize=10, legendfontsize=11)
         if hprm !== nothing && hasproperty(hprm, prm_keys[1])
-            hline!([getproperty(hprm, prm_keys[1])], linestyle=:dash, linewidth=2, color=:black, label="true parameter")
+            hline!([getproperty(hprm, prm_keys[1])], linestyle=:dash, linewidth=3, color=:black, label="true parameter")
         end
-        scatter!(1:N, mles[:,1], markershape=:square, markersize=2, color="#165DB1", label="")
+        scatter!(1:N, mles[:,1], markershape=:square, markersize=3, color="#165DB1", label="")
         if compare
-            plot!(inits[:,1], label="inits", color="#9ABCE4",linewidth=1)
-            scatter!(1:N, inits[:,1], markershape=:square, markersize=2, color="#9ABCE4", label="")
+            plot!(inits[:,1], label="inits", color="#9ABCE4",linewidth=2)
+            scatter!(1:N, inits[:,1], markershape=:square, markersize=3, color="#9ABCE4", label="")
         end
         scatter!([ind_best], [mles[ind_best, 1]], markershape=:x, markerstrokewidth=5, markersize=8, color="#F7811E", label="best estimate")
         
         # subplot 2
-        p2 = plot(mles[:,2], label="MLEs $(prm_keys[2])", title="", color="#165DB1", linewidth=2, ylabel="", xlabel="restart index")
+        p2 = plot(mles[:,2], label="MLEs $(prm_keys[2])", title="", color="#165DB1", linewidth=3, ylabel="", xlabel="restart index",
+        xtickfontsize=10, ytickfontsize=10, legendfontsize=11)
         if hprm !== nothing && hasproperty(hprm, prm_keys[2])
-            hline!([getproperty(hprm, prm_keys[2])], linestyle=:dash, linewidth=2, color=:black, label="true parameter")
+            hline!([getproperty(hprm, prm_keys[2])], linestyle=:dash, linewidth=3, color=:black, label="true parameter")
         end
-        scatter!(1:N, mles[:,2], markershape=:square, markersize=2, color="#165DB1", label="")
+        scatter!(1:N, mles[:,2], markershape=:square, markersize=3, color="#165DB1", label="")
         if compare
-            plot!(inits[:,2], label="inits", color="#9ABCE4",linewidth=1)
-            scatter!(1:N, inits[:,2], markershape=:square, markersize=2, color="#9ABCE4", label="")
+            plot!(inits[:,2], label="inits", color="#9ABCE4",linewidth=2)
+            scatter!(1:N, inits[:,2], markershape=:square, markersize=3, color="#9ABCE4", label="")
         end
         scatter!([ind_best], [mles[ind_best, 2]], markershape=:x, markerstrokewidth=5, markersize=8, color="#F7811E", label="best estimate")
         #return plot(p1, p2, layout=(1,2), size=(800,400), bottom_margin=5mm)
@@ -185,12 +188,13 @@ Plot the evolution of the loss values across multiple-restart MLEs, highlighting
     - `N::Int64=20`: Number of restarts
 """
 function plot_mult_restart_losses(inits_loss::Vector, losses::Vector, ind_best::Int64; compare::Bool=false, N::Int64=20)
-    plot(losses, label="MLEs", color="#165DB1",linewidth=2, title="", ylabel = "loss value", xlabel="restart index")
-    scatter!(1:N, losses, markershape=:square, markersize=2, color="#165DB1", label="")
+    plot(losses, label="MLEs", color="#165DB1",linewidth=3, title="", ylabel = "loss value", xlabel="restart index",
+    xtickfontsize=10, ytickfontsize=10, legendfontsize=14)
+    scatter!(1:N, losses, markershape=:square, markersize=3, color="#165DB1", label="")
 
     if compare
-        plot!(inits_loss, label="init", color="#9ABCE4",linewidth=1)
-        scatter!(1:N, inits_loss, markershape=:square, markersize=2, color="#9ABCE4", label="")
+        plot!(inits_loss, label="init", color="#9ABCE4",linewidth=2)
+        scatter!(1:N, inits_loss, markershape=:square, markersize=3, color="#9ABCE4", label="")
     end
 
     scatter!([ind_best], [losses[ind_best]], markershape=:x, markerstrokewidth=5, markersize=8, color="#F7811E", label="lowest")
@@ -220,7 +224,7 @@ function plot_gaussian(mle::Vector, cov::Matrix, prm_keys::Vector)
         dens = Normal(mle[1], sqrt(cov[1]))
         x = range(mle[1] - 3*sqrt(cov[1,1]), mle[1] + 3*sqrt(cov[1,1]), length=1000)
         pdf_evals = pdf.(dens, x)
-        surface_plot = plot(x,pdf_evals, xlabel=prm_keys[1], linewidth=2, color="#165DB1", label="")
+        surface_plot = plot(x,pdf_evals, xlabel=prm_keys[1], linewidth=3, color="#165DB1", label="", xtickfontsize=10, ytickfontsize=10, legendfontsize=14)
         heatmap_plot = nothing
     else
         # set custom color gradient
@@ -237,11 +241,14 @@ function plot_gaussian(mle::Vector, cov::Matrix, prm_keys::Vector)
         pdf_evals = [pdf(dens, [ai, mi]) for mi in m, ai in a]
 
         # create heatmap
-        heatmap_plot = heatmap(a,m,pdf_evals, xlabel=prm_keys[1], ylabel=prm_keys[2], color=tum_cgrad, colorbar=false)
+        heatmap_plot = heatmap(a,m,pdf_evals, xlabel=prm_keys[1], ylabel=prm_keys[2], color=tum_cgrad, colorbar=false,
+        xtickfontsize=10, ytickfontsize=10, legendfontsize=14)
 
         # create 3D plots from different viewpoints
-        v1 = plot(a, m, pdf_evals, st=:surface, xlabel=prm_keys[1], ylabel=prm_keys[2], color=tum_cgrad, colorbar=false)
-        v2 = plot(m, a, pdf_evals', st=:surface, xlabel=prm_keys[2], ylabel=prm_keys[1], color=tum_cgrad, colorbar=false)
+        v1 = plot(a, m, pdf_evals, st=:surface, xlabel=prm_keys[1], ylabel=prm_keys[2], color=tum_cgrad, colorbar=false,
+        xtickfontsize=10, ytickfontsize=10, legendfontsize=14)
+        v2 = plot(m, a, pdf_evals', st=:surface, xlabel=prm_keys[2], ylabel=prm_keys[1], color=tum_cgrad, colorbar=false,
+        xtickfontsize=10, ytickfontsize=10, legendfontsize=14)
         surface_plot = [v1,v2]
     end
 
