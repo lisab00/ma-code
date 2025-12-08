@@ -15,9 +15,8 @@ The following are implemented (amongst others):
 
 In `src/` all the functionalities are implemented; `notebooks` contains all experiments conducted in Jupyter notebooks; `plots/` stores all resulting plots.
 
-
+##### Main references:
 <sub>
-<b>Main references:<br>
 [1] <b>Klausmeier, C. A.</b> (1999). "Regular and irregular patterns in semiarid vegetation." <i>Science</i>, 284(5421), 1826-1828.<br>
 [2] <b>Piazzola, C., et al.</b> (2021). "A note on tools for prediction under uncertainty and identifiability of SIR-like dynamical systems for epidemiology." In: Mathematical Biosciences 332 (2021), p. 108514.<br>
 [3] <b>Roesch, E., & Stumpf, M. P. H.</b> (2019). "Parameter inference in dynamical systems with co-dimension 1 bifurcations." <i>Royal Society Open Science</i>, 6(10).
